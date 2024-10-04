@@ -1,17 +1,15 @@
-import cors from "cors";
-import {
-  saveFaceIdController,
-  getFormUrlController,
-  postFormUrlController,
-} from "../adapters/controllers/student.controller";
-import express from "express";
+import cors from 'cors';
+import express from 'express';
+import { studentRoutes } from '../interface/routes/studentRoutes';
+import { errorHandler } from '../domain/interfaces/middleware/errorHandler';
+import { setupSwagger } from '../interface/swagger';
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: '10mb' }));
 
-app.post("/api/saveFaceId", saveFaceIdController);
-app.get("/api/form-url", getFormUrlController);
-app.post("/api/saveFormUrl", postFormUrlController);
+app.use('/api', studentRoutes);
+app.use(errorHandler);
+setupSwagger(app);
 
 export default app;

@@ -1,13 +1,13 @@
-import dotenv from "dotenv";
-import app from "./infrastructure/server";
-import { connectionDatabase } from "./infrastructure/database/mongoose.connection";
+import dotenv from 'dotenv';
+import app from './infrastructure/server';
+import { logger } from './infrastructure/logger';
 
 dotenv.config();
+const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
-  await connectionDatabase();
-  app.listen(3000, () => {
-    console.log("Server running on port 3000");
+  app.listen(PORT, () => {
+    logger.info(`Server is running on port ${PORT}`);
   });
 };
 
