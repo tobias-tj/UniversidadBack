@@ -4,6 +4,7 @@ export class Student {
     public nombre: string,
     public email: string,
     public rol: string,
-    public face_id: string
+    public face_id: string,
+    public cedula: string,
   ) {}
 }
