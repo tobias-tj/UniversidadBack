@@ -1,0 +1,202 @@
+openapi: 3.0.0
+info:
+  title: Student API
+  description: API para la gestión de estudiantes
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: URL local de desarrollo
+paths:
+  /getAllStudents:
+    get:
+      summary: Get all students
+      tags: [Students]
+      responses:
+        200:
+          description: List of all students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    name:
+                      type: string
+                      example: Estudiante 1
+                    email:
+                      type: string
+                      example: estudiante1@mail.com
+                    rol:
+                      type: string
+                      example: EST
+                    face_id:
+                      type: string
+                      example: faceId123
+
+  /getStudentById/{id}:
+    get:
+      summary: Get Student By ID
+      tags: [Students]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del estudiante
+      responses:
+        200:
+          description: Estudiante obtenido por ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  nombre:
+                    type: string
+                    example: Estudiante 1
+                  email:
+                    type: string
+                    example: estudiante1@mail.com
+                  rol:
+                    type: string
+                    example: EST
+                  face_id:
+                    type: string
+                    example: faceId123
+        400:
+          description: ID inválido o faltante
+        404:
+          description: No se ha encontrado un estudiante con ese ID
+        500:
+          description: Error interno del servidor
+
+  /createStudent:
+    post:
+      summary: Create a new student
+      tags: [Students]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  example: Estudiante 1
+                email:
+                  type: string
+                  example: estudiante1@mail.com
+                rol:
+                  type: string
+                  example: EST
+                face_id:
+                  type: string
+                  example: faceId123
+      responses:
+        201:
+          description: Student created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  nombre:
+                    type: string
+                    example: Estudiante 1
+                  email:
+                    type: string
+                    example: estudiante1@mail.com
+                  rol:
+                    type: string
+                    example: EST
+                  face_id:
+                    type: string
+                    example: faceId123
+        400:
+          description: Bad request (validation error)
+        500:
+          description: Internal server error
+  /updateStudentById:
+    patch:
+      summary: Update an existing student
+      tags: [Students]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                  description: ID del estudiante a actualizar (requerido)
+                nombre:
+                  type: string
+                  example: Estudiante Nuevo
+                  description: Nuevo nombre del estudiante
+                email:
+                  type: string
+                  example: estudianteNuev@mail.com
+                  description: Nuevo correo electrónico del estudiante
+                rol:
+                  type: string
+                  example: EST
+                  description: Nuevo rol del estudiante
+                face_id:
+                  type: string
+                  example: faceIdTest
+                  description: Nuevo face ID del estudiante
+      responses:
+        200:
+          description: Usuario actualizado con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Usuario actualizado con éxito'
+        400:
+          description: Solicitud incorrecta (error de validación)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error en los datos para actualizar un usuario'
+        404:
+          description: Estudiante no encontrado (ID no existe)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'No se ha encontrado un estudiante con ese ID'
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error interno del servidor'

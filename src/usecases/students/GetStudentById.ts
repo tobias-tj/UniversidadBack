@@ -1,9 +1,9 @@
 import { StudentRepo } from '../../domain/interfaces/StudentRepo';
 
-export class GetAllEstudiantes {
+export class GetStudentById {
   constructor(private studentRepo: StudentRepo) {}
 
-  async execute() {
-    return await this.studentRepo.findAll();
+  async execute(id: number) {
+    return await this.studentRepo.findById(id);
   }
 }
