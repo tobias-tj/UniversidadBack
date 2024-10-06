@@ -1,5 +1,5 @@
 import { Exam } from '../../domain/entities/Exam';
-import { ExamRepo } from '../../domain/interfaces/ExamRepo';
+import { ExamRepo } from '../../domain/interfaces/repositories/ExamRepo';
 
 export class CreateExam {
   constructor(private examRepo: ExamRepo) {}

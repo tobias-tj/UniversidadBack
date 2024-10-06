@@ -1,5 +1,5 @@
 import { Student } from '../../domain/entities/Student';
-import { StudentRepo } from '../../domain/interfaces/StudentRepo';
+import { StudentRepo } from '../../domain/interfaces/repositories/StudentRepo';
 
 export class CreateStudent {
   constructor(private studentRepo: StudentRepo) {}

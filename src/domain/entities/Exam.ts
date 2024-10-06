@@ -4,6 +4,5 @@ export class Exam {
     public descripcion: string,
     public fecha: string,
     public estado: string,
-    public formUrl: string,
   ) {}
 }
