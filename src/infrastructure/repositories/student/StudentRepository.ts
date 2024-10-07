@@ -1,8 +1,8 @@
-import { Student } from '../../domain/entities/Student';
-import { CustomError } from '../../domain/interfaces/middleware/errorHandler';
-import { StudentRepo } from '../../domain/interfaces/StudentRepo';
-import { pool } from '../database/dbConnection';
-import { logger } from '../logger';
+import { Student } from '../../../domain/entities/Student';
+import { CustomError } from '../../../domain/interfaces/middleware/errorHandler';
+import { StudentRepo } from '../../../domain/interfaces/repositories/StudentRepo';
+import { pool } from '../../database/dbConnection';
+import { logger } from '../../logger';
 
 export class StudentRepository implements StudentRepo {
   private student: Student[] = [];
@@ -46,18 +46,25 @@ export class StudentRepository implements StudentRepo {
     }
   }
 
-  async create(student: Student): Promise<Student> {
+  async create(student: Student): Promise<boolean> {
     try {
       logger.info('Inicia proceso para crear un nuevo estudiante');
-      const result = await pool.query(
-        'INSERT INTO usuarios (nombre, email, rol, face_id) VALUES ($1, $2, $3, $4) RETURNING *',
-        [student.nombre, student.email, student.rol, student.face_id],
+      await pool.query(
+        'INSERT INTO usuarios (id, nombre, email, rol, face_id, ci) VALUES ($1, $2, $3, $4, $5, $6)',
+        [
+          student.id,
+          student.nombre,
+          student.email,
+          student.rol,
+          student.face_id,
+          student.cedula,
+        ],
       );
       logger.info('Estudiante creado con exito');
-      return result.rows[0];
+      return true;
     } catch (error) {
       logger.error('Error creando estudiante: ' + error);
-      throw error;
+      return false;
     }
   }
   async update(student: Student): Promise<void> {

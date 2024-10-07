@@ -1,40 +1,35 @@
-import { Router } from 'express';
-import { GetAllEstudiantes } from '../../usecases/students/GetAllEstudiantes';
-import { StudentController } from '../controllers/student.controller';
-import { StudentRepository } from '../../infrastructure/repositories/StudentRepository';
+import { StartExamController } from '../controllers/startExam.controller';
+import { StudentRepository } from '../../infrastructure/repositories/student/StudentRepository';
 import { CreateStudent } from '../../usecases/students/CreateStudent';
+import { ExamRepository } from '../../infrastructure/repositories/exam/ExamRepository';
+import { CreateExam } from '../../usecases/exam/CreateExam';
+import { createStudentValidation } from '../../domain/interfaces/middleware/studentValidation';
+import { Router, Request, Response, NextFunction } from 'express';
+import { createExamValidation } from '../../domain/interfaces/middleware/examValidation';
 import { GetStudentById } from '../../usecases/students/GetStudentById';
-import { UpdateStudent } from '../../usecases/students/UpdateStudent';
+import { GetExamById } from '../../usecases/exam/GetExamById';
 
 const router = Router();
 
 const studentRepository = new StudentRepository();
-const getAllStudents = new GetAllEstudiantes(studentRepository);
+const examRepository = new ExamRepository();
 const createStudent = new CreateStudent(studentRepository);
 const getStudentById = new GetStudentById(studentRepository);
-const updateStudent = new UpdateStudent(studentRepository);
+const createExam = new CreateExam(examRepository);
+const getExamById = new GetExamById(examRepository);
 
-const studentController = new StudentController(
-  getAllStudents,
-  getStudentById,
+const startExamController = new StartExamController(
   createStudent,
-  updateStudent,
+  getStudentById,
+  createExam,
+  getExamById,
 );
 
-router.get('/getAllStudents', (req, res, next) =>
-  studentController.getAll(req, res, next),
-);
-
-router.get('/getStudentById/:id', (req, res, next) =>
-  studentController.getStudentById(req, res, next),
-);
-
-router.post('/createStudent', (req, res, next) =>
-  studentController.createStudent(req, res, next),
-);
-
-router.patch('/updateStudentById', (req, res, next) =>
-  studentController.updateStudent(req, res, next),
+router.post(
+  '/startExam',
+  [...createStudentValidation, ...createExamValidation],
+  (req: Request, res: Response, next: NextFunction) =>
+    startExamController.handleExamProcess(req, res, next),
 );
 
 export { router as studentRoutes };
