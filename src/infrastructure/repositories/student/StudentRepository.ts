@@ -1,6 +1,6 @@
 import { Student } from '../../../domain/entities/Student';
 import { CustomError } from '../../../domain/interfaces/middleware/errorHandler';
-import { StudentRepo2 } from '../../../domain/interfaces/repositories/StudentRepo';
+import { StudentRepo } from '../../../domain/interfaces/repositories/StudentRepo';
 import { pool } from '../../database/dbConnection';
 import { logger } from '../../logger';
 
