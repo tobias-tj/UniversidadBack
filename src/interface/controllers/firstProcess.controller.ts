@@ -9,7 +9,7 @@ import { ExamMapper } from '../../mappers/ExamMapper';
 import { GetStudentById } from '../../usecases/students/GetStudentById';
 import { GetExamById } from '../../usecases/exam/GetExamById';
 
-export class StartExamController {
+export class FirstProcessController {
   constructor(
     private createStudentUsecase: CreateStudent,
     private findStudentByIdUseCase: GetStudentById,
@@ -19,40 +19,30 @@ export class StartExamController {
 
   async handleExamProcess(req: Request, res: Response, next: NextFunction) {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
+      console.log(req);
       const {
-        formUrl,
-        descripcion,
         estado,
         idFormulario,
         idUsuario,
-        nombre,
-        cedula,
-        email,
         rol,
+        fullname,
+        courseName,
+        email,
       } = req.body;
 
       const createExamDTO = new CreateExamDTO(
         idFormulario,
-        descripcion,
         new Date().toISOString(),
         estado,
+        courseName,
       );
 
       const createStudentDto = new CreateStudentDTO(
         idUsuario,
-        nombre,
-        email,
         rol,
-        '',
-        cedula,
+        fullname,
+        email,
       );
-
-      const redirectUrl = `http://localhost:5173/?formUrl=${encodeURIComponent(formUrl)}&id=${idFormulario}&code=${idUsuario}`;
 
       const [existingStudent, existingExam] = await Promise.all([
         this.findStudentByIdUseCase.execute(idUsuario),
@@ -70,8 +60,6 @@ export class StartExamController {
         ]);
         return res.status(201).json({
           message: 'Nuevo estudiante y examen creados.',
-          redirectUrl: redirectUrl,
-          formUrl,
         });
       }
 
@@ -82,8 +70,6 @@ export class StartExamController {
         );
         return res.status(201).json({
           message: 'Examen nuevo creado para estudiante existente.',
-          redirectUrl: redirectUrl,
-          formUrl,
         });
       }
 
@@ -94,8 +80,6 @@ export class StartExamController {
         );
         return res.status(201).json({
           message: 'Nuevo estudiante creado para examen existente.',
-          redirectUrl: redirectUrl,
-          formUrl,
         });
       }
 

@@ -4,12 +4,14 @@ import { CreateExamUserDTO } from '../../domain/interfaces/dto/manage_exam_user/
 import { CreateExamUser } from '../../usecases/manage_exam_user/CreateExamUser';
 import { CreateFaceId } from '../../usecases/manage_exam_user/CreateFaceIdUser';
 import { CreateStartTime } from '../../usecases/manage_exam_user/StartTimeExam';
+import { CreateFinishTime } from '../../usecases/manage_exam_user/FinishTimeExam';
 
 export class ManageExamController {
   constructor(
     private createExamUserUsecase: CreateExamUser,
     private createFaceIdUseCase: CreateFaceId,
     private createStartTime: CreateStartTime,
+    private createFinishTime: CreateFinishTime,
   ) {}
 
   async manageCreateExamProcess(
@@ -23,16 +25,13 @@ export class ManageExamController {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { id, code } = req.body;
+      const { formId, userId } = req.body;
 
-      const createExamUser = new CreateExamUserDTO(id, code);
-      // Renombramos por un nombre mas identificable
-      const idExamen = createExamUser.id;
-      const idUsuario = createExamUser.code;
+      const createExamUser = new CreateExamUserDTO(formId, userId);
 
       const createdId = await this.createExamUserUsecase.execute(
-        idExamen,
-        idUsuario,
+        createExamUser.formId,
+        createExamUser.userId,
       );
 
       if (createdId == null) {
@@ -87,6 +86,28 @@ export class ManageExamController {
 
       return res.status(200).json({
         message: 'Examen procesado correctamente',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async manageFinishTimeExam(req: Request, res: Response, next: NextFunction) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { createdId } = req.body;
+      const processFinishExam = await this.createFinishTime.execute(createdId);
+
+      if (!processFinishExam) {
+        return res.status(409);
+      }
+
+      return res.status(200).json({
+        message: 'Examen finalizado correctamente',
       });
     } catch (error) {
       next(error);

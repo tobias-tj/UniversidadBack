@@ -9,7 +9,7 @@ export class ExamRepository implements ExamRepo {
       logger.info('Inicia proceso para crear el examen del estudiante');
       await pool.query(
         'INSERT INTO examenes (id, descripcion, fecha, estado) VALUES ($1, $2, $3, $4)',
-        [exam.id, exam.descripcion, exam.fecha, exam.estado],
+        [exam.id, exam.courseName, exam.fecha, exam.estado],
       );
       logger.info('Examen Guardado Correctamente!');
       return true;

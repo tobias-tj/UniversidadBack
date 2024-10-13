@@ -7,20 +7,20 @@ export class CreateExamDTO {
 
   @IsString()
   @IsNotEmpty()
-  descripcion: string;
-
-  @IsString()
-  @IsNotEmpty()
   fecha: string;
 
   @IsString()
   @IsNotEmpty()
   estado: string;
 
-  constructor(id: number, descripcion: string, fecha: string, estado: string) {
+  @IsString()
+  @IsNotEmpty()
+  courseName: string;
+
+  constructor(id: number, fecha: string, estado: string, courseName: string) {
     this.id = id;
-    this.descripcion = descripcion;
     this.fecha = fecha;
     this.estado = estado;
+    this.courseName = courseName;
   }
 }

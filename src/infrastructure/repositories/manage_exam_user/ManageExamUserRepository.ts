@@ -58,4 +58,26 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
       return false;
     }
   }
+
+  async createFinishTime(creationId: number): Promise<boolean> {
+    try {
+      logger.info(
+        'Inicia proceso para guardar el horario de finalizacion del examen.',
+      );
+      await pool.query(
+        'UPDATE examenes_usuarios SET fin_examen = NOW() WHERE id = $1',
+        [creationId],
+      );
+      logger.info(
+        'El tiempo de finalizacion de examen fue guardado correctamente',
+      );
+      return true;
+    } catch (error) {
+      logger.info(
+        'Ocurrió un error inesperado al intentar guardar el tiempo de finalizacion de examen: ' +
+          error,
+      );
+      return false;
+    }
+  }
 }

@@ -5,4 +5,5 @@ export interface StudentRepo {
   findById(id: number): Promise<Student | null>;
   create(student: Student): Promise<boolean>;
   update(student: Student): Promise<void>;
+  findByIdCheckout(id: number): Promise<boolean>;
 }

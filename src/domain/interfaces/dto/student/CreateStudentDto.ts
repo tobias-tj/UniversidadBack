@@ -14,38 +14,20 @@ export class CreateStudentDTO {
 
   @IsString()
   @IsNotEmpty()
-  @Length(2, 50)
-  nombre: string;
-
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @IsString()
-  @IsNotEmpty()
   rol: string;
 
   @IsString()
-  @IsOptional()
-  face_id?: string;
+  @IsNotEmpty()
+  fullname: string;
 
   @IsString()
   @IsNotEmpty()
-  cedula: string;
+  email: string;
 
-  constructor(
-    id: number,
-    nombre: string,
-    email: string,
-    rol: string,
-    face_id: string,
-    cedula: string,
-  ) {
+  constructor(id: number, rol: string, fullname: string, email: string) {
     this.id = id;
-    this.nombre = nombre;
-    this.email = email;
     this.rol = rol;
-    this.face_id = face_id;
-    this.cedula = cedula;
+    this.fullname = fullname;
+    this.email = email;
   }
 }

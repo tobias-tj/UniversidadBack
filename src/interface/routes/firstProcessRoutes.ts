@@ -1,4 +1,4 @@
-import { StartExamController } from '../controllers/startExam.controller';
+import { FirstProcessController } from '../controllers/firstProcess.controller';
 import { StudentRepository } from '../../infrastructure/repositories/student/StudentRepository';
 import { CreateStudent } from '../../usecases/students/CreateStudent';
 import { ExamRepository } from '../../infrastructure/repositories/exam/ExamRepository';
@@ -18,7 +18,7 @@ const getStudentById = new GetStudentById(studentRepository);
 const createExam = new CreateExam(examRepository);
 const getExamById = new GetExamById(examRepository);
 
-const startExamController = new StartExamController(
+const firstProcessController = new FirstProcessController(
   createStudent,
   getStudentById,
   createExam,
@@ -26,10 +26,10 @@ const startExamController = new StartExamController(
 );
 
 router.post(
-  '/startExam',
+  '/firstProcess',
   [...createStudentValidation, ...createExamValidation],
   (req: Request, res: Response, next: NextFunction) =>
-    startExamController.handleExamProcess(req, res, next),
+    firstProcessController.handleExamProcess(req, res, next),
 );
 
-export { router as studentRoutes };
+export { router as firstProcessRoutes };

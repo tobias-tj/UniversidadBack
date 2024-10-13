@@ -1,6 +1,6 @@
 import { body } from 'express-validator';
 
 export const createExamUserValidation = [
-  body('id').notEmpty().withMessage('El id es obligatorio'),
-  body('code').notEmpty().withMessage('El code es obligatorio'),
+  body('formId').notEmpty().withMessage('El FormId es obligatorio'),
+  body('userId').notEmpty().withMessage('El UserId es obligatorio'),
 ];

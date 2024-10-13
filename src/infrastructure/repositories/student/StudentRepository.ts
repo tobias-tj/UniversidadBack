@@ -50,15 +50,8 @@ export class StudentRepository implements StudentRepo {
     try {
       logger.info('Inicia proceso para crear un nuevo estudiante');
       await pool.query(
-        'INSERT INTO usuarios (id, nombre, email, rol, face_id, ci) VALUES ($1, $2, $3, $4, $5, $6)',
-        [
-          student.id,
-          student.nombre,
-          student.email,
-          student.rol,
-          student.face_id,
-          student.cedula,
-        ],
+        'INSERT INTO usuarios (id, nombre, email, rol) VALUES ($1, $2, $3, $4)',
+        [student.id, student.fullname, student.email, student.rol],
       );
       logger.info('Estudiante creado con exito');
       return true;
@@ -74,9 +67,9 @@ export class StudentRepository implements StudentRepo {
       let index = 1;
 
       // Construimos la query dinámicamente basándonos en los campos no nulos
-      if (student.nombre) {
+      if (student.fullname) {
         updateFields.push(`nombre = $${index++}`);
-        values.push(student.nombre);
+        values.push(student.fullname);
       }
       if (student.email) {
         updateFields.push(`email = $${index++}`);
@@ -86,11 +79,6 @@ export class StudentRepository implements StudentRepo {
         updateFields.push(`rol = $${index++}`);
         values.push(student.rol);
       }
-      if (student.face_id) {
-        updateFields.push(`face_id = $${index++}`);
-        values.push(student.face_id);
-      }
-
       if (updateFields.length === 0) {
         logger.info('No hay campos para actualizar');
         const error: CustomError = new Error('No hay campos para actualizar');
@@ -124,6 +112,32 @@ export class StudentRepository implements StudentRepo {
       logger.info('Estudiante actualizado con éxito');
     } catch (error) {
       logger.error('Error actualizando estudiante: ' + error);
+      throw error;
+    }
+  }
+
+  async findByIdCheckout(id: number): Promise<boolean> {
+    try {
+      logger.info('Inicia proceso para obtener un estudiante');
+      const result = await pool.query(
+        'SELECT EXISTS(SELECT 1 FROM usuarios WHERE id = $1);',
+        [id],
+      );
+
+      // Accede al valor booleano directamente
+      const exists = result.rows[0].exists;
+
+      if (!exists) {
+        logger.info(`No se encontró el estudiante con el ID: ${id}`);
+        return false;
+      }
+
+      logger.info(
+        'Finaliza con éxito el proceso para obtener el estudiante por el ID',
+      );
+      return true;
+    } catch (error) {
+      logger.error('Error obteniendo el estudiante por su Id');
       throw error;
     }
   }

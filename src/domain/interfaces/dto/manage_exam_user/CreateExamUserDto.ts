@@ -3,14 +3,14 @@ import { IsNotEmpty, IsNumber } from 'class-validator';
 export class CreateExamUserDTO {
   @IsNumber()
   @IsNotEmpty()
-  id: number;
+  formId: number;
 
   @IsNumber()
   @IsNotEmpty()
-  code: number;
+  userId: number;
 
   constructor(id: number, code: number) {
-    this.id = id;
-    this.code = code;
+    this.formId = id;
+    this.userId = code;
   }
 }

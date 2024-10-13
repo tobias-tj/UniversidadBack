@@ -1,15 +1,16 @@
 import cors from 'cors';
 import express from 'express';
-import { studentRoutes } from '../interface/routes/studentRoutes';
+import { firstProcessRoutes } from '../interface/routes/firstProcessRoutes';
 import { errorHandler } from '../domain/interfaces/middleware/errorHandler';
 import { setupSwagger } from '../interface/swagger';
 import { manageExamUserRoutes } from '../interface/routes/manageExamUserRoutes';
+import { accessCheckoutRoutes } from '../interface/routes/accessCheckoutRoutes';
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-app.use('/api', studentRoutes, manageExamUserRoutes);
+app.use('/api', firstProcessRoutes, manageExamUserRoutes, accessCheckoutRoutes);
 app.use(errorHandler);
 setupSwagger(app);
 
