@@ -80,4 +80,36 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
       return false;
     }
   }
+
+  async findMatchUserAndExam(
+    idExamen: number,
+    idUsuario: number,
+  ): Promise<boolean> {
+    try {
+      logger.info(
+        'Inicia proceso para averiguar si existe una relacion de examen y estudiante.',
+      );
+      const result = await pool.query(
+        'SELECT EXISTS(SELECT 1 FROM examenes_usuarios WHERE examen_id = $1 AND estudiante_id = $2);',
+        [idExamen, idUsuario],
+      );
+      // Accedemos al valor booleano directamente
+      const exists = result.rows[0].exist;
+
+      if (!exists) {
+        logger.info('No existe una relacion estudiante y examen');
+        return false;
+      }
+
+      logger.info(
+        'Finaliza con exito el proceso para encontrar una relacion entre estudiante y examen',
+      );
+      return true;
+    } catch (error) {
+      logger.error(
+        'Error tratando de encontrar una relacion entre estudiante y examen',
+      );
+      throw error;
+    }
+  }
 }

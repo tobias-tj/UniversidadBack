@@ -8,6 +8,8 @@ import { StudentMapper } from '../../mappers/StudentMapper';
 import { ExamMapper } from '../../mappers/ExamMapper';
 import { GetStudentById } from '../../usecases/students/GetStudentById';
 import { GetExamById } from '../../usecases/exam/GetExamById';
+import { FindMatchStudentExam } from '../../usecases/manage_exam_user/FindMatchStudentExam';
+import { CreateExamUser } from '../../usecases/manage_exam_user/CreateExamUser';
 
 export class FirstProcessController {
   constructor(
@@ -15,6 +17,8 @@ export class FirstProcessController {
     private findStudentByIdUseCase: GetStudentById,
     private createExamUseCase: CreateExam,
     private findExamByIdUseCase: GetExamById,
+    private findMatchStudentExam: FindMatchStudentExam,
+    private createExamUserUsecase: CreateExamUser,
   ) {}
 
   async handleExamProcess(req: Request, res: Response, next: NextFunction) {
@@ -44,6 +48,19 @@ export class FirstProcessController {
         email,
       );
 
+      const existingMatch = await this.findMatchStudentExam.execute(
+        createExamDTO.id,
+        createStudentDto.id,
+      );
+
+      if (existingMatch) {
+        // Caso 4: Usuario y Examen Existente -> Proceso Invalido
+        return res.status(403).json({
+          message:
+            'El usuario ya ha realizado este examen, no puede realizarlo nuevamente.',
+        });
+      }
+
       const [existingStudent, existingExam] = await Promise.all([
         this.findStudentByIdUseCase.execute(idUsuario),
         this.findExamByIdUseCase.execute(idFormulario),
@@ -58,9 +75,6 @@ export class FirstProcessController {
             StudentMapper.toEntity(createStudentDto),
           ),
         ]);
-        return res.status(201).json({
-          message: 'Nuevo estudiante y examen creados.',
-        });
       }
 
       if (existingStudent && !existingExam) {
@@ -68,9 +82,6 @@ export class FirstProcessController {
         await this.createExamUseCase.execute(
           ExamMapper.toEntity(createExamDTO),
         );
-        return res.status(201).json({
-          message: 'Examen nuevo creado para estudiante existente.',
-        });
       }
 
       if (!existingStudent && existingExam) {
@@ -78,15 +89,20 @@ export class FirstProcessController {
         await this.createStudentUsecase.execute(
           StudentMapper.toEntity(createStudentDto),
         );
-        return res.status(201).json({
-          message: 'Nuevo estudiante creado para examen existente.',
-        });
       }
 
-      // Caso 4: Usuario y Examen Existente -> Proceso Invalido
-      res.status(403).json({
-        message:
-          'El usuario ya ha realizado este examen, no puede realizarlo nuevamente.',
+      const createdId = await this.createExamUserUsecase.execute(
+        createExamDTO.id,
+        createStudentDto.id,
+      );
+
+      if (createdId == null) {
+        // Algun Conflicto con los datos
+        return res.status(409);
+      }
+
+      return res.status(201).json({
+        createdId: createdId,
       });
     } catch (error) {
       next(error);
