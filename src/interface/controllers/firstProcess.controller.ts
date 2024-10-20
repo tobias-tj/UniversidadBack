@@ -23,7 +23,6 @@ export class FirstProcessController {
 
   async handleExamProcess(req: Request, res: Response, next: NextFunction) {
     try {
-      console.log(req);
       const {
         estado,
         idFormulario,
