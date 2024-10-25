@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import { CreateFaceId } from '../../usecases/manage_exam_user/CreateFaceIdUser';
 import { CreateStartTime } from '../../usecases/manage_exam_user/StartTimeExam';
 import { CreateFinishTime } from '../../usecases/manage_exam_user/FinishTimeExam';
+import { logger } from '../../infrastructure/logger';
 
 export class ManageExamController {
   constructor(
@@ -42,6 +43,7 @@ export class ManageExamController {
       }
 
       const { createdId } = req.body;
+      logger.info(createdId, "Controller manageStartTimeExam CreatedId");
       const processStartExam = await this.createStartTime.execute(createdId);
 
       if (!processStartExam) {

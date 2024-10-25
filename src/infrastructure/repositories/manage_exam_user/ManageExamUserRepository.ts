@@ -10,6 +10,7 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
         'INSERT INTO examenes_usuarios (examen_id, estudiante_id) VALUES ($1, $2) RETURNING id',
         [idExamen, idUsuario],
       );
+      logger.info(`examen ${idExamen}, usuario ${idUsuario}`)
       logger.info('Datos guardados correctamente para examenesUsuarios');
 
       const insertedId = result.rows[0]?.id;
@@ -44,10 +45,12 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
       logger.info(
         'Inicia proceso para guardar el horario del comienzo del examen.',
       );
-      await pool.query(
+      logger.info(creationId + "CreateStartTime creationID");
+      const result = await pool.query(
         'UPDATE examenes_usuarios SET inicio_examen = NOW() WHERE id = $1',
         [creationId],
       );
+      logger.info(result.rowCount + " filas afectadas");
       logger.info('El tiempo de inicio de examen fue guardado correctamente');
       return true;
     } catch (error) {

@@ -7,6 +7,7 @@ servers:
   - url: http://localhost:3000/api
     description: URL local de desarrollo
 paths:
+  # Student
   /getAllStudents:
     get:
       summary: Get all students
@@ -190,6 +191,335 @@ paths:
                   error:
                     type: string
                     example: 'No se ha encontrado un estudiante con ese ID'
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error interno del servidor'
+
+  # ExamRepository
+  /accessCheckout:
+    get:
+      tags: [ExamRepository]
+      summary: Verificar existencia de un estudiante en el proceso de checkout
+      description: Este endpoint verifica si un estudiante existe en el sistema, basándose en su `userId`. Retorna si el estudiante existe o no.
+      operationId: handleAccessCheckoutProcess
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: ID del estudiante para verificar su existencia en el sistema.
+          schema:
+            type: integer
+            example: 456
+      responses:
+        '200':
+          description: Verificación exitosa del estudiante
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  idUsuario:
+                    type: integer
+                    example: 456
+                  isExist:
+                    type: boolean
+                    example: true
+        '404':
+          description: El estudiante no fue encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  idUsuario:
+                    type: integer
+                    example: 456
+                  isExist:
+                    type: boolean
+                    example: false
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Ocurrió un error inesperado."
+  # firstProcess
+  /firstProcess:
+    post:
+      tags: [firstProcess]
+      summary: Inicia el proceso de examen para un estudiante
+      description: Este endpoint permite manejar el proceso de examen, incluyendo la creación de un nuevo usuario y un nuevo examen, o la asignación de un examen existente a un estudiante.
+      operationId: handleExamProcess
+      requestBody:
+        description: Datos necesarios para procesar el examen y el estudiante.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  description: El estado del examen.
+                  example: "estado"
+                idFormulario:
+                  type: integer
+                  description: El ID del formulario de examen.
+                  example: 123
+                idUsuario:
+                  type: integer
+                  description: El ID del estudiante.
+                  example: 456
+                rol:
+                  type: string
+                  description: El rol del estudiante.
+                  example: "rol"
+                fullname:
+                  type: string
+                  description: El nombre completo del estudiante.
+                  example: "fullname"
+                courseName:
+                  type: string
+                  description: El nombre del curso al que pertenece el examen.
+                  example: "courseName"
+                email:
+                  type: string
+                  description: El correo electrónico del estudiante.
+                  example: "email"
+
+      responses:
+        200:
+          description: Checkeado con éxito!
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Checkeado con éxito!'
+
+        400:
+          description: Solicitud incorrecta (error de validación)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error en los datos para verificar FaceId'
+        404:
+          description: FaceId o usuario no encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'FaceId o usuario no encontrado'
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error interno del servidor'
+  # manageExamUserRepository
+  # /manageFaceId:
+    patch:
+      tags: [manageExamUserRepository]
+      summary: Actualizar el Face ID de un usuario para un examen
+      description: Permite actualizar el Face ID de un usuario específico en el contexto de un examen.
+      operationId: manageCreateFaceId
+      parameters:
+        - in: body
+          name: faceIdData
+          required: true
+          description: Datos necesarios para actualizar el Face ID.
+          schema:
+            type: object
+            properties:
+              idFace:
+                type: string
+                description: El Face ID que se asociará con el usuario.
+                example: "face_1234567890"
+              idUser:
+                type: integer
+                description: El ID del usuario al que se le actualizará el Face ID.
+                example: 123
+      responses:
+        '200':
+          description: Face ID actualizado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Solicitud incorrecta (parámetros inválidos)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Error al procesar la solicitud, datos incorrectos."
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Usuario no encontrado."
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Ocurrió un error inesperado al almacenar el faceId."
+  /manageStartTimeExam:
+    patch:
+      summary: StartTimeExam
+      tags: [manageExamUserRepository]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                createdId:
+                  type: integer
+                  example: 1
+                  description: createdId
+
+      responses:
+        200:
+          description: Examen iniciado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Examen iniciado con éxito'
+        400:
+          description: Solicitud incorrecta (error de validación)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error en los datos para actualizar un usuario'
+        404:
+          description: Examen o estudiante no encontrado (ID no existe)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Examen o estudiante no encontrado'
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error interno del servidor'
+  /manageFinishTimeExam:
+    patch:
+      summary: FinishTimeExam
+      tags: [manageExamUserRepository]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                createdId:
+                  type: integer
+                  example: 1
+                  description: createdId
+
+      responses:
+        200:
+          description: Examen terminado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Examen terminado con éxito'
+        400:
+          description: Solicitud incorrecta (error de validación)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Error en los datos para terminar examen'
+        404:
+          description: Examen o estudiante no encontrado (ID no existe)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Examen o estudiante no encontrado'
         500:
           description: Error interno del servidor
           content:
