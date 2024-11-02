@@ -16,7 +16,6 @@ const accessCheckoutController = new AccessCheckoutController(
 
 router.get(
   '/accessCheckout',
-  validateAccessCheckoutRequest,
   (req: Request, res: Response, next: NextFunction) =>
     accessCheckoutController.handleAccessCheckoutProcess(req, res, next),
 );

@@ -35,7 +35,7 @@ const firstProcessController = new FirstProcessController(
 
 router.post(
   '/firstProcess',
-  [...createStudentValidation, ...createExamValidation],
+  // [...createStudentValidation, ...createExamValidation],
   (req: Request, res: Response, next: NextFunction) =>
     firstProcessController.handleExamProcess(req, res, next),
 );
