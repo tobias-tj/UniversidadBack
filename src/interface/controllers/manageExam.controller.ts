@@ -4,6 +4,7 @@ import { CreateFaceId } from '../../usecases/manage_exam_user/CreateFaceIdUser';
 import { CreateStartTime } from '../../usecases/manage_exam_user/StartTimeExam';
 import { CreateFinishTime } from '../../usecases/manage_exam_user/FinishTimeExam';
 import { logger } from '../../infrastructure/logger';
+import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 
 export class ManageExamController {
   constructor(
@@ -42,8 +43,15 @@ export class ManageExamController {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { createdId } = req.body;
-      logger.info(createdId, "Controller manageStartTimeExam CreatedId");
+      const { createdId, token } = req.body;
+
+      if (!token) {
+        return res.status(401);
+      }
+
+      const decoded = decodeToken(token);
+
+      logger.info(createdId, 'Controller manageStartTimeExam CreatedId');
       const processStartExam = await this.createStartTime.execute(createdId);
 
       if (!processStartExam) {
@@ -52,6 +60,7 @@ export class ManageExamController {
 
       return res.status(200).json({
         message: 'Examen procesado correctamente',
+        formUrl: decoded?.formUrl,
       });
     } catch (error) {
       next(error);

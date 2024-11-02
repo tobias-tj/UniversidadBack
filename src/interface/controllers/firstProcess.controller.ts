@@ -10,6 +10,7 @@ import { GetStudentById } from '../../usecases/students/GetStudentById';
 import { GetExamById } from '../../usecases/exam/GetExamById';
 import { FindMatchStudentExam } from '../../usecases/manage_exam_user/FindMatchStudentExam';
 import { CreateExamUser } from '../../usecases/manage_exam_user/CreateExamUser';
+import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 
 export class FirstProcessController {
   constructor(
@@ -23,28 +24,28 @@ export class FirstProcessController {
 
   async handleExamProcess(req: Request, res: Response, next: NextFunction) {
     try {
-      const {
-        estado,
-        idFormulario,
-        idUsuario,
-        rol,
-        fullname,
-        courseName,
-        email,
-      } = req.body;
+      const { estado, rol, token } = req.body;
+
+      if (!token) {
+        return res.status(401);
+      }
+
+      const decoded = decodeToken(token);
 
       const createExamDTO = new CreateExamDTO(
-        idFormulario,
+        decoded?.formId!,
         new Date().toISOString(),
         estado,
-        courseName,
+        decoded?.courseName!,
       );
 
+      const fullName = `${decoded?.firstname} ${decoded?.lastname}`;
+
       const createStudentDto = new CreateStudentDTO(
-        idUsuario,
+        Number(decoded?.userId!),
         rol,
-        fullname,
-        email,
+        fullName,
+        decoded?.email!,
       );
 
       const existingMatch = await this.findMatchStudentExam.execute(
@@ -61,8 +62,8 @@ export class FirstProcessController {
       }
 
       const [existingStudent, existingExam] = await Promise.all([
-        this.findStudentByIdUseCase.execute(idUsuario),
-        this.findExamByIdUseCase.execute(idFormulario),
+        this.findStudentByIdUseCase.execute(Number(decoded?.userId!)),
+        this.findExamByIdUseCase.execute(decoded?.formId!),
       ]);
 
       // Logica para los diferentes casos:
