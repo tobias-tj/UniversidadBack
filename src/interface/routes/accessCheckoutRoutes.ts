@@ -3,6 +3,7 @@ import { StudentRepository } from '../../infrastructure/repositories/student/Stu
 import { GetStudentById } from '../../usecases/students/GetStudentById';
 import { GetStudentByIdCheckout } from '../../usecases/students/GetStudenByIdCheckout';
 import { AccessCheckoutController } from '../controllers/accessCheckout.controller';
+import { validateAccessCheckoutRequest } from '../../domain/interfaces/middleware/validateAccessCheckout';
 
 const router = Router();
 
@@ -15,6 +16,7 @@ const accessCheckoutController = new AccessCheckoutController(
 
 router.get(
   '/accessCheckout',
+  validateAccessCheckoutRequest,
   (req: Request, res: Response, next: NextFunction) =>
     accessCheckoutController.handleAccessCheckoutProcess(req, res, next),
 );
