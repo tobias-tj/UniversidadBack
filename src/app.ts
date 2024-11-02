@@ -8,10 +8,9 @@ const cors = require('cors');
 
 const corsOptions = {
   origin: 'http://localhost:5173',
-  optionsSuccessStatus: 200
 };
 
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
 const startServer = async () => {
   app.listen(PORT, () => {
     logger.info(`Server is running on port ${PORT}`);
