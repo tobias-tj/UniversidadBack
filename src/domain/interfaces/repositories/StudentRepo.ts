@@ -6,4 +6,5 @@ export interface StudentRepo {
   create(student: Student): Promise<boolean>;
   update(student: Student): Promise<void>;
   findByIdCheckout(id: number): Promise<boolean>;
+  getStudentIncident(isCount?: boolean): Promise<Student[]>;
 }

@@ -53,7 +53,7 @@ export class StudentRepository implements StudentRepo {
         'INSERT INTO usuarios (id, nombre, email, rol) VALUES ($1, $2, $3, $4)',
         [student.id, student.fullname, student.email, student.rol],
       );
-      logger.info("Estudiante Id: " + student.id);
+      logger.info('Estudiante Id: ' + student.id);
       logger.info('Estudiante creado con exito');
       return true;
     } catch (error) {
@@ -139,6 +139,44 @@ export class StudentRepository implements StudentRepo {
       return true;
     } catch (error) {
       logger.error('Error obteniendo el estudiante por su Id');
+      throw error;
+    }
+  }
+
+  async getStudentClean(): Promise<Student[]> {
+    try {
+      logger.info('Inicia proceso para obtener un estudiante');
+      const result = await pool.query(
+        'SELECT EXISTS(SELECT * FROM resumen_reportes WHERE id = $1);',
+      );
+
+      logger.info(
+        'Finaliza con éxito el proceso para obtener estudiantes sin incidencias',
+      );
+      return [];
+    } catch (error) {
+      logger.error('Error obteniendo el estudiantes sin incidencias');
+      throw error;
+    }
+  }
+
+  async getStudentIncident(isCount: boolean): Promise<Student[]> {
+    try {
+      logger.info('Inicia proceso para obtener un estudiante');
+      let sql = '';
+      if (isCount === true) {
+        sql =
+          'SELECT COUNT(DISTINCT examen_id) AS unique_examen_count FROM examenes_usuarios';
+      } else {
+        sql = 'SELECT DISTINCT examen_id FROM examenes_usuarios';
+      }
+      const result = await pool.query(sql);
+      logger.info(
+        'Finaliza con éxito el proceso para obtener estudiantes sin incidencias',
+      );
+      return result ? result.rows : [];
+    } catch (error) {
+      logger.error('Error obteniendo el estudiantes sin incidencias');
       throw error;
     }
   }

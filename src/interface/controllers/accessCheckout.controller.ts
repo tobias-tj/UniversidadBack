@@ -1,4 +1,5 @@
 import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
+import { logger } from '../../infrastructure/logger';
 import { GetStudentByIdCheckout } from '../../usecases/students/GetStudenByIdCheckout';
 import { NextFunction, Request, Response } from 'express';
 
@@ -44,6 +45,7 @@ export class AccessCheckoutController {
         isExist: true,
       });
     } catch (error) {
+      logger.info("Entro en tryCatch de AccessCheckout")
       next(error);
     }
   }
