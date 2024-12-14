@@ -1,3 +1,4 @@
+import { ReportResume } from '../../entities/ReportResume';
 import { Student } from '../../entities/Student';
 
 export interface StudentRepo {
@@ -6,5 +7,4 @@ export interface StudentRepo {
   create(student: Student): Promise<boolean>;
   update(student: Student): Promise<void>;
   findByIdCheckout(id: number): Promise<boolean>;
-  getStudentIncident(isCount?: boolean): Promise<Student[]>;
 }

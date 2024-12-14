@@ -5,12 +5,13 @@ import { errorHandler } from '../domain/interfaces/middleware/errorHandler';
 import { setupSwagger } from '../interface/swagger';
 import { manageExamUserRoutes } from '../interface/routes/manageExamUserRoutes';
 import { accessCheckoutRoutes } from '../interface/routes/accessCheckoutRoutes';
+import { dashboardRoutes } from '../interface/routes/dashboardRoutes';
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-app.use('/api', firstProcessRoutes, manageExamUserRoutes, accessCheckoutRoutes);
+app.use('/api', firstProcessRoutes, manageExamUserRoutes, accessCheckoutRoutes, dashboardRoutes);
 app.use(errorHandler);
 setupSwagger(app);
 
