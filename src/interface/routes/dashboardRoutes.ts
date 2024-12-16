@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { dashboardController } from '../controllers/dashboard.controller';
 import { GetStudentIncident } from '../../usecases/dashboard/getStudentIncident';
-import { GetIncidentsByExamId } from '../../usecases/dashboard/GetIncidentsByExamId';
+import { GetIncidentsByStudentId } from '../../usecases/dashboard/GetIncidentsByStudentId';
 import { DashboardRepository } from '../../infrastructure/repositories/dashboard/dashboardRepository';
 import { GetAllStudentsIncidentCount } from '../../usecases/dashboard/GetAllStudentsIncidentCount';
 
@@ -9,8 +9,10 @@ const router = Router();
 
 const dashboardRepository = new DashboardRepository();
 const getStudentIncident = new GetStudentIncident(dashboardRepository);
-const getIncidentsByExamId = new GetIncidentsByExamId(dashboardRepository);
-const getAllStudentsCount = new GetAllStudentsIncidentCount(dashboardRepository);
+const getIncidentsByExamId = new GetIncidentsByStudentId(dashboardRepository);
+const getAllStudentsCount = new GetAllStudentsIncidentCount(
+  dashboardRepository,
+);
 const DashboardController = new dashboardController(
   getStudentIncident,
   getIncidentsByExamId,
@@ -24,9 +26,9 @@ router.get(
 );
 
 router.get(
-  '/getIncidentsByExamId',
+  '/getIncidentsByStudentId',
   (req: Request, res: Response, next: NextFunction) =>
-    DashboardController.getStudentsIncidentByExamId(req, res, next),
+    DashboardController.getStudentsIncidentByStudentId(req, res, next),
 );
 
 router.get(
