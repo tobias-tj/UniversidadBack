@@ -37,7 +37,7 @@ router.get(
 );
 
 router.get(
-  '/getExamIncidentByUserID/:examId',
+  '/getExamIncidentByUserId/:examId',
   validateExamIncidentByUserID,
   (req: Request, res: Response, next: NextFunction) =>
     examDashboardController.getListStudentIncidentByExamId(req, res, next),
