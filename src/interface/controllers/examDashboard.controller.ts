@@ -6,7 +6,7 @@ const examRepo = new ExamRepository();
 export class ExamDashboardController {
   async getAllExams(req: Request, res: Response, next: NextFunction) {
     try {
-      const count = await examRepo.getExamCount(); 
+      const count = await examRepo.getExamCount();
       res.status(200).json({ count });
     } catch (error) {
       next(error);
@@ -25,16 +25,12 @@ export class ExamDashboardController {
 
   async getExamClean(req: Request, res: Response, next: NextFunction) {
     try {
-      
       const cleanExamsCount = await examRepo.getCleanExamsCount();
-  
       return res.status(200).json({ count: cleanExamsCount });
     } catch (error) {
       next(error);
     }
   }
-  
-  
 
   async getExamIncident(req: Request, res: Response, next: NextFunction) {
     try {
@@ -51,15 +47,32 @@ export class ExamDashboardController {
     }
   }
 
-  async getExamIncidentByUserID(req: Request, res: Response, next: NextFunction) {
+  async getListStudentIncidentByExamId(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const { userID } = req.params;
-      const exams = await examRepo.getExamsByUserIdWithIncidents(Number(userID));
+      const { examId } = req.params;
+      const exams = await examRepo.getListStudentByExamId(Number(examId));
 
       if (!exams.length) {
-        return res.status(404).json({ message: 'No se encontraron exámenes para el usuario' });
+        return res
+          .status(404)
+          .json({
+            message: 'No se han registrado incidentes para este examen',
+          });
       }
 
+      res.status(200).json(exams);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAllListExamInfo(req: Request, res: Response, next: NextFunction) {
+    try {
+      const exams = await examRepo.getAllListExamInfo();
       res.status(200).json(exams);
     } catch (error) {
       next(error);

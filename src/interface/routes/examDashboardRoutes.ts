@@ -37,10 +37,16 @@ router.get(
 );
 
 router.get(
-  '/getExamIncidentByUserID/:userID',
+  '/getExamIncidentByUserID/:examId',
   validateExamIncidentByUserID,
   (req: Request, res: Response, next: NextFunction) =>
-    examDashboardController.getExamIncidentByUserID(req, res, next),
+    examDashboardController.getListStudentIncidentByExamId(req, res, next),
+);
+
+router.get(
+  '/getAllListExamInfo',
+  (req: Request, res: Response, next: NextFunction) =>
+    examDashboardController.getAllListExamInfo(req, res, next),
 );
 
 // Exportar con alias
