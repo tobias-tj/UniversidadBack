@@ -1,0 +1,139 @@
+import { ReportResume } from '../../../domain/entities/ReportResume';
+import { CustomError } from '../../../domain/interfaces/middleware/errorHandler';
+import { DashboardRepo } from '../../../domain/interfaces/repositories/DashboardRepo';
+import { pool } from '../../database/dbConnection';
+import { logger } from '../../logger';
+import { IncidentsCount } from '../../../domain/entities/IncidentsCount';
+import { newStudent } from '../../../domain/entities/newStudent';
+
+export class DashboardRepository implements DashboardRepo {
+  //Pasa que te falto para obtener todos los estudiantes independientemente si es un incidente o no. Y la idea es obtener la info de estos estudiantes no el count nms
+  async getStudentIncident(isCount?: boolean): Promise<newStudent[]> {
+    try {
+      logger.info('Inicia proceso para obtener un estudiante');
+      let sql = '';
+      if (isCount === true) {
+        sql =
+          'SELECT COUNT(DISTINCT id_examenes_usuarios) AS unique_examen_count FROM resumen_reportes';
+      } else {
+        // sql = 'SELECT * FROM resumen_reportes';
+        sql = `select 
+                u.nombre, 
+                u.id as ci, 
+                u.email as correo 
+                from usuarios u 
+                where u.rol = 'EST'
+                order by u.id desc;`;
+      }
+      const result = await pool.query(sql);
+      logger.info(
+        'Finaliza con éxito el proceso para obtener estudiantes sin incidencias',
+      );
+      return result ? result.rows : [];
+    } catch (error) {
+      logger.error('Error obteniendo el estudiantes sin incidencias');
+      throw error;
+    }
+  }
+
+  async getIncidentsByStudentId(id: String): Promise<ReportResume[]> {
+    try {
+      logger.info('Inicia proceso para obtener un estudiante');
+      // let sql = `SELECT * FROM resumen_reportes WHERE id_examenes_usuarios = ${id}`;
+      let sql = `select
+      eu.examen_id,
+      e.descripcion ,
+      e.fecha ,
+      sum(rr.score) as puntos
+      from examenes_usuarios eu 
+      join usuarios u 
+      on u.id  = eu.estudiante_id 
+      join examenes e 
+      on e.id = eu.examen_id 
+      join resumen_reportes rr 
+      on eu.id = rr.id_examenes_usuarios
+      where u.id=${id}
+      group by 
+      eu.examen_id, e.descripcion, e.fecha;`;
+      const result = await pool.query(sql);
+      logger.info(
+        'Finaliza con éxito el proceso para obtener datos de estudiante por examen',
+      );
+      return result ? result.rows : [];
+    } catch (error) {
+      logger.error('Error obteniendo datos de estudiante por examen');
+      throw error;
+    }
+  }
+
+  // Averiguar porque estos dos de aqui son iguales
+  async getAllStudentsIncidents(): Promise<ReportResume[]> {
+    try {
+      logger.info('Inicia proceso para obtener un estudiante');
+      const query = `
+      SELECT 
+    COUNT(DISTINCT e.id) AS total_estudiantes,
+    COUNT(DISTINCT rr.id_examenes_usuarios) AS total_estudiantes_con_incidencias,
+    COUNT(DISTINCT e.id) - COUNT(DISTINCT rr.id_examenes_usuarios) AS total_estudiantes_sin_incidencias
+FROM 
+    examenes e
+LEFT JOIN 
+    examenes_usuarios eu ON e.id = eu.examen_id
+LEFT JOIN 
+    resumen_reportes rr ON eu.id = rr.id_examenes_usuarios
+    `;
+      const result = await pool.query(query);
+      logger.info(
+        'Finaliza con éxito el proceso para obtener datos de estudiante por examen',
+      );
+      return result ? result.rows : [];
+    } catch (error) {
+      logger.error('Error obteniendo datos de estudiante por examen');
+      throw error;
+    }
+  }
+
+  async getAllStudentsCount(): Promise<IncidentsCount> {
+    try {
+      logger.info('Inicia proceso para obtener un estudiante');
+      const query = `
+      WITH total_estudiantes_cte AS (
+    SELECT COUNT(*) AS total_estudiantes
+    FROM usuarios
+)
+SELECT 
+    (SELECT total_estudiantes FROM total_estudiantes_cte) AS total_estudiantes,
+    COUNT(DISTINCT rr.id_examenes_usuarios) AS total_estudiantes_con_incidencias,
+    (SELECT total_estudiantes FROM total_estudiantes_cte) - COUNT(DISTINCT rr.id_examenes_usuarios) AS total_estudiantes_sin_incidencias
+FROM 
+    examenes e
+LEFT JOIN 
+    examenes_usuarios eu ON e.id = eu.examen_id
+LEFT JOIN 
+    resumen_reportes rr ON eu.id = rr.id_examenes_usuarios;
+    `;
+      const result = await pool.query(query);
+      logger.info(
+        'Finaliza con éxito el proceso para obtener datos de estudiante por examen',
+      );
+      if (result && result.rows.length > 0) {
+        const row = result.rows[0];
+        return {
+          total_estudiantes: row.total_estudiantes,
+          total_estudiantes_con_incidencias:
+            row.total_estudiantes_con_incidencias,
+          total_estudiantes_sin_incidencias:
+            row.total_estudiantes_sin_incidencias,
+        } as IncidentsCount;
+      }
+      return {
+        total_estudiantes: '',
+        total_estudiantes_con_incidencias: '',
+        total_estudiantes_sin_incidencias: '',
+      } as IncidentsCount;
+    } catch (error) {
+      logger.error('Error obteniendo datos de estudiante por examen');
+      throw error;
+    }
+  }
+}

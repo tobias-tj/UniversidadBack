@@ -1,3 +1,4 @@
+import { ReportResume } from '../../entities/ReportResume';
 import { Student } from '../../entities/Student';
 
 export interface StudentRepo {

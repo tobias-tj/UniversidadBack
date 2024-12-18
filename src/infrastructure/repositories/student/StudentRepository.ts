@@ -1,3 +1,4 @@
+import { ReportResume } from '../../../domain/entities/ReportResume';
 import { Student } from '../../../domain/entities/Student';
 import { CustomError } from '../../../domain/interfaces/middleware/errorHandler';
 import { StudentRepo } from '../../../domain/interfaces/repositories/StudentRepo';
@@ -53,7 +54,7 @@ export class StudentRepository implements StudentRepo {
         'INSERT INTO usuarios (id, nombre, email, rol) VALUES ($1, $2, $3, $4)',
         [student.id, student.fullname, student.email, student.rol],
       );
-      logger.info("Estudiante Id: " + student.id);
+      logger.info('Estudiante Id: ' + student.id);
       logger.info('Estudiante creado con exito');
       return true;
     } catch (error) {

@@ -1,4 +1,5 @@
 import { Exam } from '../../../domain/entities/Exam';
+import { ExamCount } from '../../../domain/entities/ExamCount';
 import { ExamRepo } from '../../../domain/interfaces/repositories/ExamRepo';
 import { pool } from '../../database/dbConnection';
 import { logger } from '../../logger';
@@ -38,6 +39,199 @@ export class ExamRepository implements ExamRepo {
       return result.rows[0];
     } catch (error) {
       logger.info('Error obteniendo el examen');
+      throw error;
+    }
+  }
+
+  async getExamCount(): Promise<number> {
+    try {
+      const result = await pool.query(
+        'SELECT COUNT(*) AS total FROM examenes;',
+      );
+      return parseInt(result.rows[0].total, 10);
+    } catch (error) {
+      logger.error('Error obteniendo la cantidad total de exámenes: ' + error);
+      throw error;
+    }
+  }
+
+  async filterExams(filters: any) {
+    // Inicializar arrays para condiciones y valores
+    const conditions: string[] = [];
+    const values: any[] = [];
+
+    // Agregar filtros por rango de fechas
+    if (filters.fechaInicio) {
+      conditions.push(`fecha >= $${values.length + 1}`);
+      values.push(filters.fechaInicio);
+    }
+
+    if (filters.fechaFin) {
+      conditions.push(`fecha <= $${values.length + 1}`);
+      values.push(filters.fechaFin);
+    }
+
+    // Agregar búsqueda por descripción
+    if (filters.search) {
+      conditions.push(`descripcion ILIKE $${values.length + 1}`);
+      values.push(`%${filters.search}%`);
+    }
+
+    // Construir consulta dinámica
+    const query = `
+      SELECT * 
+      FROM examenes 
+      ${conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''} 
+      ORDER BY ${filters.sortBy || 'fecha'} ${filters.order === 'desc' ? 'DESC' : 'ASC'}
+    `;
+
+    // Imprimir la consulta generada para depuración
+    console.log('Generated Query:', query);
+    console.log('Query Values:', values);
+
+    // Ejecutar consulta
+    try {
+      const result = await pool.query(query, values);
+      return result.rows;
+    } catch (error) {
+      logger.error('Error filtrando exámenes: ' + error);
+      throw error;
+    }
+  }
+
+  async getCleanExamsCount(): Promise<number> {
+    try {
+      // Consulta para obtener la cantidad de exámenes sin incidencias
+      const countResult = await pool.query(`
+        SELECT COUNT(*) AS total
+        FROM examenes e
+        LEFT JOIN examenes_usuarios eu ON e.id = eu.examen_id
+        LEFT JOIN resumen_reportes rr ON eu.id = rr.id_examenes_usuarios
+        WHERE rr.id IS NULL;
+      `);
+      return parseInt(countResult.rows[0].total, 10);
+    } catch (error) {
+      logger.error(
+        'Error obteniendo la cantidad de exámenes limpios: ' + error,
+      );
+      throw error;
+    }
+  }
+
+  async getExamsWithIncidents(): Promise<any[]> {
+    try {
+      const result = await pool.query(`
+        SELECT e.id, e.descripcion, e.fecha, COUNT(rr.id) AS incidencias
+        FROM examenes e
+        LEFT JOIN examenes_usuarios eu ON e.id = eu.examen_id
+        LEFT JOIN resumen_reportes rr ON eu.id = rr.id_examenes_usuarios
+        WHERE rr.id IS NOT NULL
+        GROUP BY e.id, e.descripcion, e.fecha
+        ORDER BY e.id ASC;
+      `);
+      return result.rows;
+    } catch (error) {
+      logger.error('Error obteniendo exámenes con incidencias: ' + error);
+      throw error;
+    }
+  }
+
+  // Obtener de una vez todos los count que tengan que ver con TotalExamenes, TotalExamenesIncident y TotalExamenesClean
+  async getAllTotalExamCount(): Promise<ExamCount> {
+    try {
+      logger.info(
+        'Inicia proceso para obtener el total de examenes, con incidencias y limpios',
+      );
+      const query = `
+         WITH total_examenes_cte AS (
+      SELECT COUNT(*) AS total_examenes
+      FROM examenes
+      )
+      SELECT 
+          (SELECT total_examenes FROM total_examenes_cte) AS total_examenes,
+          COUNT(DISTINCT rr.id_examenes_usuarios) AS total_examenes_con_incidencias,
+          (SELECT total_examenes FROM total_examenes_cte) - COUNT(DISTINCT rr.id_examenes_usuarios) AS total_examenes_sin_incidencias
+      FROM 
+          examenes e
+      LEFT JOIN 
+          examenes_usuarios eu ON e.id = eu.examen_id
+      LEFT JOIN 
+          resumen_reportes rr ON eu.id = rr.id_examenes_usuarios;
+      `;
+      const result = await pool.query(query);
+      logger.info(
+        'Finaliza con exitos el proceso para obtener el total de examenes de los diferentes tipos',
+      );
+      if (result && result.rows.length > 0) {
+        const row = result.rows[0];
+        return {
+          total_examenes: row.total_examenes,
+          total_examenes_con_incidencias: row.total_examenes_con_incidencias,
+          total_examenes_sin_incidencias: row.total_examenes_sin_incidencias,
+        } as ExamCount;
+      }
+      return {
+        total_examenes: '',
+        total_examenes_con_incidencias: '',
+        total_examenes_sin_incidencias: '',
+      } as ExamCount;
+    } catch (error) {
+      logger.error('Error obteniendo total de examenes de diferentes tipos');
+      throw error;
+    }
+  }
+
+  // este deberia de ser getListStudentByExamId
+  //-- para obtener usuarios por examenes
+  async getListStudentByExamId(examId: number): Promise<any[]> {
+    try {
+      const result = await pool.query(
+        `
+        select
+        u.nombre,
+        u.id ,
+        e.fecha ,
+        sum(rr.score) as puntos
+        from examenes_usuarios eu 
+        join usuarios u 
+        on u.id  = eu.estudiante_id 
+        join examenes e 
+        on e.id = eu.examen_id 
+        join resumen_reportes rr 
+        on eu.id = rr.id_examenes_usuarios
+        where e.id= $1
+        group by 
+        u.nombre,
+        u.id , e.fecha;
+      `,
+        [examId],
+      );
+      return result.rows;
+    } catch (error) {
+      logger.error(
+        'Error obteniendo exámenes por el id del examen con incidencias: ' +
+          error,
+      );
+      throw error;
+    }
+  }
+
+  async getAllListExamInfo(): Promise<any[]> {
+    try {
+      const result = await pool.query(
+        `
+        SELECT 
+          id, 
+          descripcion, 
+          fecha
+        FROM 
+          examenes;
+        `,
+      );
+
+      return result.rows;
+    } catch (error) {
+      logger.error('Error obteniendo exámenes: ' + error);
       throw error;
     }
   }
