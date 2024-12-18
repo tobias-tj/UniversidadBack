@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ExamRepository } from '../../infrastructure/repositories/exam/ExamRepository';
+import { validationResult } from 'express-validator';
+import { logger } from '../../infrastructure/logger';
 
 const examRepo = new ExamRepository();
 
@@ -47,6 +49,24 @@ export class ExamDashboardController {
     }
   }
 
+  async getAllTotalExamCount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const errors = validationResult(req);
+      logger.info('Inicia proceso para obtener total examenes');
+      if (!errors.isEmpty) {
+        res.status(400).json({ errors: errors.array() });
+      }
+
+      const examListTotal = await examRepo.getAllTotalExamCount();
+      logger.info('Termina el proceso para obtener total examenes');
+      return res.status(200).json({
+        data: examListTotal,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getListStudentIncidentByExamId(
     req: Request,
     res: Response,
@@ -57,11 +77,9 @@ export class ExamDashboardController {
       const exams = await examRepo.getListStudentByExamId(Number(examId));
 
       if (!exams.length) {
-        return res
-          .status(404)
-          .json({
-            message: 'No se han registrado incidentes para este examen',
-          });
+        return res.status(404).json({
+          message: 'No se han registrado incidentes para este examen',
+        });
       }
 
       res.status(200).json(exams);

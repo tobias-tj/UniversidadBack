@@ -1,4 +1,5 @@
 import { Exam } from '../../../domain/entities/Exam';
+import { ExamCount } from '../../../domain/entities/ExamCount';
 import { ExamRepo } from '../../../domain/interfaces/repositories/ExamRepo';
 import { pool } from '../../database/dbConnection';
 import { logger } from '../../logger';
@@ -131,6 +132,51 @@ export class ExamRepository implements ExamRepo {
       return result.rows;
     } catch (error) {
       logger.error('Error obteniendo exámenes con incidencias: ' + error);
+      throw error;
+    }
+  }
+
+  // Obtener de una vez todos los count que tengan que ver con TotalExamenes, TotalExamenesIncident y TotalExamenesClean
+  async getAllTotalExamCount(): Promise<ExamCount> {
+    try {
+      logger.info(
+        'Inicia proceso para obtener el total de examenes, con incidencias y limpios',
+      );
+      const query = `
+         WITH total_examenes_cte AS (
+      SELECT COUNT(*) AS total_examenes
+      FROM examenes
+      )
+      SELECT 
+          (SELECT total_examenes FROM total_examenes_cte) AS total_examenes,
+          COUNT(DISTINCT rr.id_examenes_usuarios) AS total_examenes_con_incidencias,
+          (SELECT total_examenes FROM total_examenes_cte) - COUNT(DISTINCT rr.id_examenes_usuarios) AS total_examenes_sin_incidencias
+      FROM 
+          examenes e
+      LEFT JOIN 
+          examenes_usuarios eu ON e.id = eu.examen_id
+      LEFT JOIN 
+          resumen_reportes rr ON eu.id = rr.id_examenes_usuarios;
+      `;
+      const result = await pool.query(query);
+      logger.info(
+        'Finaliza con exitos el proceso para obtener el total de examenes de los diferentes tipos',
+      );
+      if (result && result.rows.length > 0) {
+        const row = result.rows[0];
+        return {
+          total_examenes: row.total_examenes,
+          total_examenes_con_incidencias: row.total_examenes_con_incidencias,
+          total_examenes_sin_incidencias: row.total_examenes_sin_incidencias,
+        } as ExamCount;
+      }
+      return {
+        total_examenes: '',
+        total_examenes_con_incidencias: '',
+        total_examenes_sin_incidencias: '',
+      } as ExamCount;
+    } catch (error) {
+      logger.error('Error obteniendo total de examenes de diferentes tipos');
       throw error;
     }
   }

@@ -37,6 +37,12 @@ router.get(
 );
 
 router.get(
+  '/getAllTotalExamCount',
+  (req: Request, res: Response, next: NextFunction) =>
+    examDashboardController.getAllTotalExamCount(req, res, next),
+);
+
+router.get(
   '/getExamIncidentByUserId/:examId',
   validateExamIncidentByUserID,
   (req: Request, res: Response, next: NextFunction) =>

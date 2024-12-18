@@ -97,16 +97,20 @@ LEFT JOIN
     try {
       logger.info('Inicia proceso para obtener un estudiante');
       const query = `
-      SELECT 
-    COUNT(DISTINCT e.id) AS total_estudiantes,
+      WITH total_estudiantes_cte AS (
+    SELECT COUNT(*) AS total_estudiantes
+    FROM usuarios
+)
+SELECT 
+    (SELECT total_estudiantes FROM total_estudiantes_cte) AS total_estudiantes,
     COUNT(DISTINCT rr.id_examenes_usuarios) AS total_estudiantes_con_incidencias,
-    COUNT(DISTINCT e.id) - COUNT(DISTINCT rr.id_examenes_usuarios) AS total_estudiantes_sin_incidencias
+    (SELECT total_estudiantes FROM total_estudiantes_cte) - COUNT(DISTINCT rr.id_examenes_usuarios) AS total_estudiantes_sin_incidencias
 FROM 
     examenes e
 LEFT JOIN 
     examenes_usuarios eu ON e.id = eu.examen_id
 LEFT JOIN 
-    resumen_reportes rr ON eu.id = rr.id_examenes_usuarios
+    resumen_reportes rr ON eu.id = rr.id_examenes_usuarios;
     `;
       const result = await pool.query(query);
       logger.info(
