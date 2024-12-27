@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 interface DecodedToken {
   userId: string;
   formId: number;
+  cmid: number;
   formUrl: string;
   firstname: string;
   lastname: string;
@@ -26,6 +27,7 @@ export const decodeToken = (token: string): DecodedToken | null => {
     return {
       userId: decoded.userId,
       formId: decoded.formId,
+      cmid: decoded.cmid,
       formUrl: decoded.formUrl,
       firstname: decoded.firstname,
       lastname: decoded.lastname,
