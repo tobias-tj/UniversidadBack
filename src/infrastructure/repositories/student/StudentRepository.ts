@@ -13,7 +13,7 @@ export class StudentRepository implements StudentRepo {
       logger.info(
         'Inicia proceso para obtener todos los estudiantes registrados',
       );
-      const result = await pool.query('SELECT * FROM usuarios');
+      const result = await pool.query('SELECT * FROM usuarios WHERE rol = EST');
 
       logger.info(
         'Finaliza con exito el proceso para obtener todos los estudiantes registrados',
