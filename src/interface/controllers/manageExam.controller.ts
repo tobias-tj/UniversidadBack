@@ -3,7 +3,7 @@ import { validationResult } from 'express-validator';
 import { CreateFaceId } from '../../usecases/manage_exam_user/CreateFaceIdUser';
 import { CreateStartTime } from '../../usecases/manage_exam_user/StartTimeExam';
 import { CreateFinishTime } from '../../usecases/manage_exam_user/FinishTimeExam';
-import { ManageExamIncident } from "../../usecases/manage_exam_user/ManageExamIncident";
+import { ManageExamIncident } from '../../usecases/manage_exam_user/ManageExamIncident';
 import { logger } from '../../infrastructure/logger';
 import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 
@@ -91,18 +91,28 @@ export class ManageExamController {
     }
   }
 
-  async manageIncidentExam(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async manageIncidentExam(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      const { createId, time, incidentType } = req.body;
+      const { createId, time, incidentType, img } = req.body;
 
-      logger.info(`Procesando incidente: ${incidentType} para relación ID: ${createId}`);
-      await this.manageExamIncident.execute(createId, incidentType, new Date(time));
+      logger.info(
+        `Procesando incidente: ${incidentType} para relación ID: ${createId}`,
+      );
+      await this.manageExamIncident.execute(
+        createId,
+        incidentType,
+        new Date(time),
+        img,
+      );
 
-      res.status(200).json({ message: "Incidente registrado exitosamente." });
+      res.status(200).json({ message: 'Incidente registrado exitosamente.' });
       return;
     } catch (error) {
       next(error);
     }
   }
 }
-
