@@ -7,4 +7,5 @@ export interface StudentRepo {
   create(student: Student): Promise<boolean>;
   update(student: Student): Promise<void>;
   findByIdCheckout(id: number): Promise<boolean>;
+  getReportResume(idUniversidad:number,idUser:number, FechaInicio:string, FechaFin:string): Promise<ReportResume[]>;
 }
