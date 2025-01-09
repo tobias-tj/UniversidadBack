@@ -76,15 +76,70 @@ app.get('/pdf', async (req, res, next) => {
       },
     };
 
-    const pdf = jasper.pdf(report);
+    const pdf = await jasper.pdf(report);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Length': pdf.length,
+      'Content-Length': pdf.length.toString(),
     });
     res.send(pdf);
-  } catch (error) {
+  } catch (error:any) {
     logger.error(`Error generating PDF: ${error.message}`);
     next(error);
+  }
+});
+
+// Ruta para generar PDF
+app.get('/generateReportPdf', async (req, res, next) => {
+  try {
+    // Recuperar parámetros de la query
+    const { idUniversidad, idUser, fecha } = req.query;
+
+    // Asegurarse de que los parámetros sean válidos
+    if (!idUser || !fecha) {
+      return res
+        .status(400)
+        .send('Faltan parámetros necesarios: idUniversidad, idUser, fecha');
+    }
+    logger.info(req.query);
+    // Datos para el reporte
+    const report = {
+      report: 'reporte_usuario.jasper', // Nombre del reporte Jasper
+      data: {
+        id: parseInt(idUniversidad as string, 10), // Convertir idUniversidad a número
+        secundaryDataset: jasper.toJsonDataSource(
+          {
+            data: [
+              { example: (idUniversidad as string) ?? '1' },
+              { example2: idUser as string },
+              { example3: fecha as string },
+            ], // Ajusta esta estructura con tus datos secundarios
+          },
+          'data',
+        ),
+      },
+      JasperParameters: {
+        IdUniversidad: parseInt((idUniversidad as string) ?? '1', 10),
+        IdUsuario: parseInt(idUser as string, 10),
+        Fecha: fecha as string, // Si es necesario, convierte a un formato de fecha
+      },
+      dataset: {
+        IdUniversidad: parseInt((idUniversidad as string) ?? '1', 10),
+        IdUsuario: parseInt(idUser as string, 10),
+        Fecha: fecha as string, // Si es necesario, convierte a un formato de fecha
+      },
+    };
+
+    // Generación del PDF
+    const pdf = await jasper.pdf(report); // Asumiendo que jasper.pdf devuelve un Buffer
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Length': pdf.length.toString(), // Convertir longitud a string
+    });
+    res.send(pdf); // Enviar el PDF generado al cliente
+    return pdf;
+  } catch (error: any) {
+    console.error(`Error generating PDF: ${error.message}`);
+    next(error); // Propagar el error al middleware de manejo de errores
   }
 });
 
