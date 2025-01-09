@@ -7,6 +7,7 @@ import { manageExamUserRoutes } from '../interface/routes/manageExamUserRoutes';
 import { accessCheckoutRoutes } from '../interface/routes/accessCheckoutRoutes';
 import { dashboardRoutes } from '../interface/routes/dashboardRoutes';
 import { examDashboardRoutes } from '../interface/routes/examDashboardRoutes';
+import { reportRoutes } from '../interface/routes/reportRoutes';
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use(
   accessCheckoutRoutes,
   examDashboardRoutes,
   dashboardRoutes,
+  reportRoutes
 );
 app.use(errorHandler);
 setupSwagger(app);
