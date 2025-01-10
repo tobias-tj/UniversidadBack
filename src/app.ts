@@ -109,9 +109,9 @@ app.get('/generateReportPdf', async (req, res, next) => {
         secundaryDataset: jasper.toJsonDataSource(
           {
             data: [
-              { example: (idUniversidad as string) ?? '1' },
-              { example2: idUser as string },
-              { example3: fecha as string },
+              { idUniversidad: (idUniversidad as string) ?? '1' },
+              { idUser: idUser as string },
+              { fecha: fecha as string },
             ], // Ajusta esta estructura con tus datos secundarios
           },
           'data',
