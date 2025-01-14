@@ -44,6 +44,7 @@ export class DashboardRepository implements DashboardRepo {
       eu.examen_id,
       e.descripcion ,
       e.fecha ,
+      eu.id as idrelacion,
       sum(rr.score) as puntos
       from examenes_usuarios eu 
       join usuarios u 
@@ -54,7 +55,7 @@ export class DashboardRepository implements DashboardRepo {
       on eu.id = rr.id_examenes_usuarios
       where u.id=${id}
       group by 
-      eu.examen_id, e.descripcion, e.fecha;`;
+      eu.examen_id, e.descripcion, e.fecha,  eu.id;`;
       const result = await pool.query(sql);
       logger.info(
         'Finaliza con éxito el proceso para obtener datos de estudiante por examen',
