@@ -143,4 +143,27 @@ export class StudentRepository implements StudentRepo {
       throw error;
     }
   }
+
+  async getReportResume(
+    idUniversidad: number,
+    idUser: number,
+    FechaInicio: string,
+    FechaFin: string,
+  ): Promise<ReportResume[]> {
+    try {
+      logger.info('Inicia proceso para obtener el resumen de los reportes');
+      const result = await pool.query(
+        'SELECT rr.* FROM resumen_reportes rr JOIN examenes_usuarios eu ON rr.id_examenes_usuarios = eu.id WHERE eu.estudiante_id = $1 AND rr.fecha_captura BETWEEN $2 AND $3',
+        [idUser, FechaInicio, FechaFin],
+      );
+
+      logger.info(
+        'Finaliza con éxito el proceso para obtener el resumen de los reportes',
+      );
+      return result.rows; // Retorna todos los reportes en formato array
+    } catch (error) {
+      logger.error('Error obteniendo el resumen de los reportes');
+      throw error;
+    }
+  }
 }
