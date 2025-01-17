@@ -3,9 +3,13 @@ import { validationResult } from 'express-validator';
 import { logger } from '../../infrastructure/logger';
 import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 import { GetStudentResumeReport } from '../../usecases/students/GetStudentResumeReport';
+import { GetAllReportByIdRelation } from '../../usecases/report/GetAllReportByIdRelation';
 
 export class ResumeReportController {
-  constructor(private StudentResumeReport: GetStudentResumeReport) {}
+  constructor(
+    private StudentResumeReport: GetStudentResumeReport,
+    private ResumeReportByIdRelation: GetAllReportByIdRelation,
+  ) {}
 
   async getStudentIncident(req: Request, res: Response, next: NextFunction) {
     try {
@@ -27,6 +31,31 @@ export class ResumeReportController {
       );
       return res.status(200).json({
         data: studentList,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async generateReportByIdRelation(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const error = validationResult(req);
+      if (!error.isEmpty()) {
+        return res.status(400).json({ errors: error.array() });
+      }
+
+      const idRelacion = Number.parseInt(req.query.idrelacion as string);
+
+      const reportList =
+        await this.ResumeReportByIdRelation.execute(idRelacion);
+
+      return res.status(200).json({
+        message: 'Report Generado Correctamente',
+        data: reportList,
       });
     } catch (error) {
       next(error);
