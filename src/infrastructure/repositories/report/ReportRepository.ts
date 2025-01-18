@@ -13,7 +13,7 @@ export class ReportRepository implements ReportsRepo {
 
       const query = `
             SELECT 
-                tipo_incidencia,
+                dominio_referencia,
                 fecha_captura,
                 imagenes_base64,
                 score

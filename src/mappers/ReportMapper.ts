@@ -3,7 +3,7 @@ import { ReportRowById } from '../domain/entities/ReportRowById';
 
 export function reportMapperById(row: ReportRowById): ReportById {
   return {
-    tipo_incidencia: row.tipo_incidencia || '',
+    dominio_referencia: row.dominio_referencia || '',
     fecha_captura: row.fecha_captura || null,
     imagenes_base64: row.imagenes_base64 || '',
     score: row.score || 0,

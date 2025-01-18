@@ -1,5 +1,5 @@
 export interface ReportRowById {
-  tipo_incidencia: string;
+  dominio_referencia: string;
   fecha_captura: Date | null;
   imagenes_base64: string;
   score: number;
