@@ -8,6 +8,7 @@ import { accessCheckoutRoutes } from '../interface/routes/accessCheckoutRoutes';
 import { dashboardRoutes } from '../interface/routes/dashboardRoutes';
 import { examDashboardRoutes } from '../interface/routes/examDashboardRoutes';
 import { reportRoutes } from '../interface/routes/reportRoutes';
+import { anunciosRoutes } from '../interface/routes/anunciosRoutes';
 
 const app = express();
 app.use(cors());
@@ -20,7 +21,8 @@ app.use(
   accessCheckoutRoutes,
   examDashboardRoutes,
   dashboardRoutes,
-  reportRoutes
+  reportRoutes,
+  anunciosRoutes,
 );
 app.use(errorHandler);
 setupSwagger(app);
