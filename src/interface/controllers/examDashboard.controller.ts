@@ -77,7 +77,8 @@ export class ExamDashboardController {
       const exams = await examRepo.getListStudentByExamId(Number(examId));
 
       if (!exams.length) {
-        return res.status(404).json({
+        return res.status(200).json({
+          exams,
           message: 'No se han registrado incidentes para este examen',
         });
       }
