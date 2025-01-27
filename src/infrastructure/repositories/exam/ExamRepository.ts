@@ -191,6 +191,9 @@ export class ExamRepository implements ExamRepo {
         u.nombre,
         u.id ,
         e.fecha ,
+        eu.id as idrelacion,
+        e.descripcion,
+        eu.examen_id as examenid,
         sum(rr.score) as puntos
         from examenes_usuarios eu 
         join usuarios u 
@@ -202,7 +205,7 @@ export class ExamRepository implements ExamRepo {
         where e.id= $1
         group by 
         u.nombre,
-        u.id , e.fecha;
+        u.id , e.fecha, eu.id, e.descripcion, eu.examen_id;
       `,
         [examId],
       );
