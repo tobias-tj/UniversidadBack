@@ -7,7 +7,6 @@ import { IncidentsCount } from '../../../domain/entities/IncidentsCount';
 import { newStudent } from '../../../domain/entities/newStudent';
 
 export class DashboardRepository implements DashboardRepo {
-  //Pasa que te falto para obtener todos los estudiantes independientemente si es un incidente o no. Y la idea es obtener la info de estos estudiantes no el count nms
   async getStudentIncident(isCount?: boolean): Promise<newStudent[]> {
     try {
       logger.info('Inicia proceso para obtener un estudiante');
