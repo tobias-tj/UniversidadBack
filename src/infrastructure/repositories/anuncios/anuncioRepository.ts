@@ -8,7 +8,7 @@ export class AnuncioRepository implements AnuncioRepo {
   async getAnuncios(): Promise<Anuncios[]> {
     try {
       logger.info('Inicia proceso para obtener los anuncios');
-      const query = `SELECT * FROM Anuncios WHERE visto = FALSE`;
+      const query = `SELECT * FROM Anuncios`;
       const result = await pool.query(query);
       console.log('Ingresando para ver los anuncios', result);
       logger.info('Finaliza con éxito el proceso para obtener los anuncios');
