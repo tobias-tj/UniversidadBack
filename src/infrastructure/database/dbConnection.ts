@@ -11,3 +11,8 @@ export const pool = new Pool({
     rejectUnauthorized: false, // Neon requiere SSL
   },
 });
+
+// Configurar la zona horaria en cada nueva conexión
+pool.on('connect', async (client) => {
+  await client.query("SET TIME ZONE 'America/Asuncion';");
+});
