@@ -16,4 +16,4 @@ router.post(
     adminController.login(req, res, next),
 );
 
-export { router as anunciosRoutes };
+export { router as adminLoginRoutes };

@@ -1,4 +1,4 @@
-import { validationResult } from 'express-validator';
+import { validationResult, query } from 'express-validator';
 import { logger } from '../../infrastructure/logger';
 import { NextFunction, Request, Response } from 'express';
 import { Login } from '../../usecases/admin_login/login';
@@ -20,7 +20,7 @@ export class AdminController {
         res.status(400).json({ errors: errors.array() });
         return;
       }
-      const JWT = await this.auth.execute(req.body.idUniversidad, req.body.user, req.body.password);
+      const JWT = await this.auth.execute(req.query.idUniversidad as unknown as number, req.query.user as string, req.query.password as string);
       logger.info('Administrador autenticado con exito');
       if (JWT) {
         res.status(200).json({ data: JWT });
