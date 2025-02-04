@@ -12,15 +12,20 @@ export class ReportRepository implements ReportsRepo {
       );
 
       const query = `
-            SELECT 
-                dominio_referencia,
-                fecha_captura,
-                imagenes_base64,
-                score
-            FROM 
-                resumen_reportes
-            WHERE 
-                id_examenes_usuarios = $1;
+           SELECT 
+            r.dominio_referencia,
+            r.fecha_captura,
+            r.score,
+            COALESCE(
+              (
+                  SELECT ARRAY_AGG(rp.imagenes_base64)
+                  FROM reportes rp
+                  WHERE rp.created_id = r.id_examenes_usuarios
+              ), '{}'::TEXT[]
+              ) AS imagenes_base64
+            FROM resumen_reportes r
+            WHERE r.id_examenes_usuarios = $1
+            LIMIT 20;
           `;
       const result = await pool.query(query, [idRelacion]);
 
