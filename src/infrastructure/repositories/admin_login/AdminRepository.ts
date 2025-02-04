@@ -45,9 +45,8 @@ export class AdminRepository implements AdminRepo {
 
       const usuario = resultUsuario[0];
 
-      // Paso 4: Comparar la contraseña (usando bcrypt o similar)
-      const isPasswordValid = await this.comparePasswords(password, usuario.password);
-      if (!isPasswordValid) {
+      // Paso 4: Comparar la contraseña
+      if (password != usuario.password) {
         logger.error('Contraseña incorrecta');
         return undefined;
       }
@@ -68,11 +67,5 @@ export class AdminRepository implements AdminRepo {
         logger.info('DynamicQuery cerrado correctamente.');
       }
     }
-  }
-
-  // Método para comparar contraseñas (usando bcrypt como ejemplo)
-  private async comparePasswords(plainPassword: string, hashedPassword: string): Promise<boolean> {
-    const bcrypt = require('bcrypt');
-    return await bcrypt.compare(plainPassword, hashedPassword);
   }
 }
