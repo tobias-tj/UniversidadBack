@@ -1,14 +1,14 @@
 import { AdminRepo } from '../../../domain/interfaces/repositories/AdminRepo';
-import { pool } from '../../database/AuthDbConnection';
-import { Pool } from 'pg';
+import { pool } from '../../database/ConfigDbConnection';
+import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class AdminRepository implements AdminRepo {
   async login(idUniversidad: number, user: string, password: string): Promise<string | undefined> {
-    let dynamicPool: Pool | null = null;
+    let dynamicQuery: DynamicDbQuery | null = null;
 
     try {
-      logger.info("Entra en metodo login");
+      logger.info('Entra en metodo login');
 
       // Paso 1: Obtener la URL de conexión de la tabla universidades
       logger.info(`ID Universidad: ${idUniversidad}`);
@@ -23,61 +23,49 @@ export class AdminRepository implements AdminRepo {
       const connectionDbUrl = resultUniversidad.rows[0].connectiondb;
       logger.info(`ConnectionDB: ${connectionDbUrl}`);
 
-      // Paso 2: Crear un nuevo pool dinámico con la URL obtenida
-      dynamicPool = new Pool({
-        connectionString: connectionDbUrl,
-        ssl: {
-          rejectUnauthorized: false, // Neon requiere SSL
-        },
-      });
-
-      dynamicPool.on('error', (err) => {
-        logger.error('Error en el dynamicPool:', err.message);
-      });
-
-      await dynamicPool.query("SET TIME ZONE 'America/Asuncion';");
-      logger.info("Se crea nuevo dynamicPool");
+      // Paso 2: Crear una instancia de DynamicDbQuery
+      dynamicQuery = new DynamicDbQuery(connectionDbUrl);
+      await dynamicQuery.initializePool();
 
       // Paso 3: Verificar si el usuario existe en la tabla usuarios con rol ADMIN
       const queryUsuario = `
-        SELECT nombre 
+        SELECT nombre, password 
         FROM usuarios 
-        WHERE rol = 'ADM' AND nombre = $1
+        WHERE rol = 'ADM' AND nombre = $1 AND password = $2
       `;
       logger.info(`Usuario: ${user}`);
       logger.info(`SQL: ${queryUsuario}`);
-      const resultUsuario = await dynamicPool.query(queryUsuario, [user]);
+      const resultUsuario = await dynamicQuery.executeQuery(queryUsuario, [user, password]);
+      logger.info('Se consulta a la DB de la universidad');
 
-      logger.info("Se consulta a la DB de la universidad");
-      if (resultUsuario.rows.length === 0) {
+      if (resultUsuario.length === 0) {
         logger.error(`Usuario administrador no encontrado: ${user}`);
         return undefined;
       }
 
-      const usuario = resultUsuario.rows[0];
+      const usuario = resultUsuario[0];
 
       // Paso 4: Comparar la contraseña (usando bcrypt o similar)
-      // const isPasswordValid = await this.comparePasswords(password, usuario.password);
-      // if (!isPasswordValid) {
-      //   logger.error(`Contraseña incorrecta para el usuario: ${user}`);
-      //   return undefined;
-      // }
+      const isPasswordValid = await this.comparePasswords(password, usuario.password);
+      if (!isPasswordValid) {
+        logger.error('Contraseña incorrecta');
+        return undefined;
+      }
 
       // Paso 5: Devolver los datos del usuario y la conexión
       const data = {
         connectionDb: connectionDbUrl,
         user: usuario.nombre,
       };
-
       return JSON.stringify(data);
-    } catch (error:any) {
+    } catch (error: any) {
       logger.error(`Error al iniciar sesión del usuario administrador: ${error.message}`);
       throw error;
     } finally {
-      // Asegúrate de cerrar el dynamicPool
-      if (dynamicPool) {
-        await dynamicPool.end();
-        logger.info("DynamicPool cerrado correctamente.");
+      // Asegúrate de cerrar el dynamicQuery
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
       }
     }
   }
