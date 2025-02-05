@@ -41,10 +41,10 @@ export class ReportRepository implements ReportsRepo {
     }
   }
 
-  async getAllReportPerDay(days:string): Promise<any> {
+  async getAllReportPerDay(days: string): Promise<any> {
     try {
       logger.info(
-        'Inicia proceso para obtener todos los reportes según idRelacion',
+        'Inicia proceso para obtener count de reportes',
       );
 
       const query = `
@@ -53,19 +53,15 @@ export class ReportRepository implements ReportsRepo {
     SUM(CASE WHEN r.id IS NULL THEN 1 ELSE 0 END) AS examenes_sin_reportes
 FROM examenes_usuarios e
 LEFT JOIN reportes r ON e.id = r.created_id
-WHERE r.fecha_captura >= NOW() - INTERVAL $1; 
+WHERE r.fecha_captura >= NOW() - INTERVAL '${days} days';
           `;
-      const result = await pool.query(query, [days]);
+      const result = await pool.query(query);
 
       if (result && result.rows.length > 0) {
         return result.rows;
       }
-
     } catch (error) {
-      logger.error(
-        'Error obteniendo el total de reportes',
-        error,
-      );
+      logger.error('Error obteniendo el total de reportes', error);
       throw error;
     }
   }
