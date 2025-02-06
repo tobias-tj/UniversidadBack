@@ -4,11 +4,13 @@ import { logger } from '../../infrastructure/logger';
 import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 import { GetStudentResumeReport } from '../../usecases/students/GetStudentResumeReport';
 import { GetAllReportByIdRelation } from '../../usecases/report/GetAllReportByIdRelation';
+import { GetReportCount } from '../../usecases/report/getReportCount';
 
 export class ResumeReportController {
   constructor(
     private StudentResumeReport: GetStudentResumeReport,
     private ResumeReportByIdRelation: GetAllReportByIdRelation,
+    private GetReportCount:GetReportCount
   ) {}
 
   async getStudentIncident(req: Request, res: Response, next: NextFunction) {
@@ -56,6 +58,30 @@ export class ResumeReportController {
       return res.status(200).json({
         message: 'Report Generado Correctamente',
         data: reportList,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getReportCounts(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const error = validationResult(req);
+      if (!error.isEmpty()) {
+        return res.status(400).json({ errors: error.array() });
+      }
+
+      const days = req.query.days as string;
+      logger.info("Execute")
+      const response =
+        await this.GetReportCount.execute(days);
+
+      return res.status(200).json({
+        data: response,
       });
     } catch (error) {
       next(error);
