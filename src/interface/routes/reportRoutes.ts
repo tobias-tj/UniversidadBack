@@ -4,19 +4,19 @@ import { GetStudentResumeReport } from '../../usecases/students/GetStudentResume
 import { GetAllReportByIdRelation } from '../../usecases/report/GetAllReportByIdRelation';
 import { ResumeReportController } from '../controllers/resumeReport.Controller';
 import { ReportRepository } from '../../infrastructure/repositories/report/ReportRepository';
-import { GetReportCount } from '../../usecases/report/getReportCount';
+import { GetReportCount } from '../../usecases/report/GetReportCount';
 
 const studentRepository = new StudentRepository();
 const reportsRepository = new ReportRepository();
 const getStudentResumeReport = new GetStudentResumeReport(studentRepository);
 const getReportCount = new GetReportCount(reportsRepository);
 const getAllReportByIdRelation = new GetAllReportByIdRelation(
-  reportsRepository
+  reportsRepository,
 );
 const resumeReportController = new ResumeReportController(
   getStudentResumeReport,
   getAllReportByIdRelation,
-  getReportCount
+  getReportCount,
 );
 const router = Router();
 router.get(

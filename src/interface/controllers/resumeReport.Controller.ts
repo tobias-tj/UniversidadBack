@@ -4,13 +4,13 @@ import { logger } from '../../infrastructure/logger';
 import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 import { GetStudentResumeReport } from '../../usecases/students/GetStudentResumeReport';
 import { GetAllReportByIdRelation } from '../../usecases/report/GetAllReportByIdRelation';
-import { GetReportCount } from '../../usecases/report/getReportCount';
+import { GetReportCount } from '../../usecases/report/GetReportCount';
 
 export class ResumeReportController {
   constructor(
     private StudentResumeReport: GetStudentResumeReport,
     private ResumeReportByIdRelation: GetAllReportByIdRelation,
-    private GetReportCount:GetReportCount
+    private GetReportCount: GetReportCount,
   ) {}
 
   async getStudentIncident(req: Request, res: Response, next: NextFunction) {
@@ -64,11 +64,7 @@ export class ResumeReportController {
     }
   }
 
-  async getReportCounts(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  async getReportCounts(req: Request, res: Response, next: NextFunction) {
     try {
       const error = validationResult(req);
       if (!error.isEmpty()) {
@@ -76,9 +72,8 @@ export class ResumeReportController {
       }
 
       const days = req.query.days as string;
-      logger.info("Execute")
-      const response =
-        await this.GetReportCount.execute(days);
+      logger.info('Execute');
+      const response = await this.GetReportCount.execute(days);
 
       return res.status(200).json({
         data: response,
