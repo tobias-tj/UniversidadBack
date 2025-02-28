@@ -4,6 +4,11 @@ import { logger } from '../logger';
 
 dotenv.config(); // Cargar las variables de entorno
 
+if (!process.env.DATABASE_URL) {
+  console.error('❌ No se encontró DATABASE_URL en .env');
+  process.exit(1);
+}
+
 // Instanciar una única vez el Pool y exportarlo
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL || '',
