@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
 import { AdminRepo } from '../../../domain/interfaces/repositories/AdminRepo';
-import { pool } from '../../database/ConfigDbConnection';
 import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
+import { pool } from '../../database/ConfigDbConnection';
 
 export class AdminRepository implements AdminRepo {
   async login(
@@ -18,7 +18,7 @@ export class AdminRepository implements AdminRepo {
       // Paso 1: Obtener la URL de conexión de la tabla universidades
       logger.info(`ID Universidad: ${idUniversidad}`);
       const queryUniversidad =
-        'SELECT * FROM universidades WHERE iduniversidad = $1';
+        'SELECT connectiondb FROM universidades WHERE iduniversidad = $1';
       const resultUniversidad = await pool.query(queryUniversidad, [
         idUniversidad,
       ]);
@@ -73,6 +73,37 @@ export class AdminRepository implements AdminRepo {
         await dynamicQuery.closePool();
         logger.info('DynamicQuery cerrado correctamente.');
       }
+    }
+  }
+
+  async updatePassword(): Promise<void> {
+    const userId = 0; // ID del usuario a actualizar
+    const hardcodedPassword = ''; // Contraseña en duro que será hasheada
+    const SALT_ROUNDS = 12; // Número de rondas para el hashing
+
+    try {
+      logger.info(
+        `Iniciando actualización de contraseña para usuario ID: ${userId}`,
+      );
+
+      // 1. Hashear la nueva contraseña
+      const hashedPassword = await bcrypt.hash(hardcodedPassword, SALT_ROUNDS);
+
+      // 2. Actualizar en la base de datos principal (pool)
+      const updateQuery = `
+            UPDATE usuarios 
+            SET password = $1 
+            WHERE id = $2
+        `;
+
+      await pool.query(updateQuery, [hashedPassword, userId]);
+
+      logger.info(
+        `Contraseña actualizada correctamente para usuario ID: ${userId}`,
+      );
+    } catch (error: any) {
+      logger.error(`Error al actualizar contraseña: ${error.message}`);
+      throw new Error('No se pudo actualizar la contraseña');
     }
   }
 }

@@ -4,4 +4,5 @@ export interface AdminRepo {
     email: string,
     password: string,
   ): Promise<string | undefined>;
+  updatePassword(): Promise<void>;
 }
