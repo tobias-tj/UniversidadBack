@@ -38,11 +38,13 @@ export class AccessCheckoutController {
       if (!studentExist) {
         res.status(200).json({
           isExist: false,
+          moddleUrl: decoded!.moodleUrl,
         });
       }
 
       return res.status(200).json({
         isExist: true,
+        moddleUrl: decoded!.moodleUrl,
       });
     } catch (error) {
       logger.info("Entro en tryCatch de AccessCheckout")
