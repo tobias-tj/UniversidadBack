@@ -63,17 +63,27 @@ export class dashboardController {
 
   async getAllStudentsCount(req: Request, res: Response, next: NextFunction) {
     try {
-      const errors = validationResult(req);
       logger.info('Inicia proceso de obtener estudiantes');
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+
+      // Extraer y validar token
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
       }
-      const studentList = await this.studentCount.execute();
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
+      // Ejecutar caso de uso con la conexión del token
+      const studentList = await this.studentCount.execute(decoded.connectionDb);
+
       logger.info('Termina proceso de obtener estudiantes');
-      return res.status(200).json({
-        data: studentList,
-      });
+      return res.status(200).json({ data: studentList });
     } catch (error) {
+      logger.error('Error en getAllStudentsCount:', error);
       next(error);
     }
   }

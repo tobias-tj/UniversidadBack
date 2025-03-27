@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ExamRepository } from '../../infrastructure/repositories/exam/ExamRepository';
 import { validationResult } from 'express-validator';
 import { logger } from '../../infrastructure/logger';
+import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 
 const examRepo = new ExamRepository();
 
@@ -51,13 +52,21 @@ export class ExamDashboardController {
 
   async getAllTotalExamCount(req: Request, res: Response, next: NextFunction) {
     try {
-      const errors = validationResult(req);
-      logger.info('Inicia proceso para obtener total examenes');
-      if (!errors.isEmpty) {
-        res.status(400).json({ errors: errors.array() });
+      // Extraer y validar token
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
       }
 
-      const examListTotal = await examRepo.getAllTotalExamCount();
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
+      const examListTotal = await examRepo.getAllTotalExamCount(
+        decoded.connectionDb,
+      );
       logger.info('Termina el proceso para obtener total examenes');
       return res.status(200).json({
         data: examListTotal,
