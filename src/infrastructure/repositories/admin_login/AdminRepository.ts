@@ -3,6 +3,7 @@ import { AdminRepo } from '../../../domain/interfaces/repositories/AdminRepo';
 import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 import { pool } from '../../database/ConfigDbConnection';
+import { UniversityList } from '../../../domain/entities/UniversityList';
 
 export class AdminRepository implements AdminRepo {
   async login(
@@ -104,6 +105,25 @@ export class AdminRepository implements AdminRepo {
     } catch (error: any) {
       logger.error(`Error al actualizar contraseña: ${error.message}`);
       throw new Error('No se pudo actualizar la contraseña');
+    }
+  }
+
+  async getUniversity(): Promise<UniversityList[]> {
+    try {
+      logger.info(
+        'Inicia proceso para obtener la lista de universidades asociadas',
+      );
+      const query = `SELECT iduniversidad, nombreuniversidad FROM universidades`;
+      const result = await pool.query(query);
+      console.log('Ingresando para ver las universidades', result);
+      logger.info(
+        'Finaliza con éxito el proceso para obtener las universidades',
+      );
+
+      return result.rows || [];
+    } catch (error) {
+      logger.error('Error obteniendo las universidades', { error });
+      throw new Error('Error obteniendo las universidades');
     }
   }
 }

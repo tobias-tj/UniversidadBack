@@ -5,11 +5,13 @@ import { Login } from '../../usecases/admin_login/login';
 import jwt from 'jsonwebtoken';
 import { UpdatePassword } from '../../usecases/admin_login/updatePassword';
 import { SECRET_KEY } from '../../domain/interfaces/middleware/jwtMiddleware';
+import { GetUniversity } from '../../usecases/admin_login/getUniversity';
 
 export class AdminController {
   constructor(
     private auth: Login,
     private updatePass: UpdatePassword,
+    private getUniList: GetUniversity,
   ) {}
 
   async login(req: Request, res: Response, next: NextFunction) {
@@ -59,6 +61,25 @@ export class AdminController {
       res.status(200).json('Password cambiado exitosamente');
     } catch (error) {
       logger.error('Error al intentar autenticar administrador', { error });
+      next(error);
+    }
+  }
+
+  async getUniversity(req: Request, res: Response, next: NextFunction) {
+    try {
+      const universityList = await this.getUniList.execute();
+      logger.info('Termina proceso para obtener universidades clientes');
+
+      if (!universityList.length) {
+        logger.info('No se encontraron universidades');
+        res.status(200).send();
+        return;
+      }
+      res.status(200).json({ data: universityList });
+    } catch (error) {
+      logger.error('Error al intentar obtener la lista de universidades', {
+        error,
+      });
       next(error);
     }
   }
