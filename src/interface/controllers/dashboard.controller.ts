@@ -16,6 +16,17 @@ export class dashboardController {
 
   async getStudentIncident(req: Request, res: Response, next: NextFunction) {
     try {
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -23,9 +34,12 @@ export class dashboardController {
       const isCount = req.query.isCount as string;
       let studentList;
       if (isCount) {
-        studentList = await this.StudentIncident.execute(true);
+        studentList = await this.StudentIncident.execute(
+          decoded.connectionDb,
+          true,
+        );
       } else {
-        studentList = await this.StudentIncident.execute();
+        studentList = await this.StudentIncident.execute(decoded.connectionDb);
       }
       return res.status(200).json({
         data: studentList,
@@ -41,6 +55,16 @@ export class dashboardController {
     next: NextFunction,
   ) {
     try {
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
       const errors = validationResult(req);
       logger.info(
         'Inicia proceso de obtener estudiantes con incidencias por StudentId',
@@ -49,7 +73,10 @@ export class dashboardController {
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
       }
-      const studentList = await this.StudentIncidentByExamId.execute(studentId);
+      const studentList = await this.StudentIncidentByExamId.execute(
+        decoded.connectionDb,
+        studentId,
+      );
       logger.info(
         'Termina proceso de obtener estudiantes con incidencias por StudentId',
       );

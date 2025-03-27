@@ -8,15 +8,23 @@ import { newStudent } from '../../../domain/entities/newStudent';
 import { DynamicDbQuery } from '../../database/DynamicQuery';
 
 export class DashboardRepository implements DashboardRepo {
-  async getStudentIncident(isCount?: boolean): Promise<newStudent[]> {
+  async getStudentIncident(
+    connectionDb: string,
+    isCount?: boolean,
+  ): Promise<newStudent[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
+
     try {
       logger.info('Inicia proceso para obtener un estudiante');
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
       let sql = '';
       if (isCount === true) {
         sql =
           'SELECT COUNT(DISTINCT id_examenes_usuarios) AS unique_examen_count FROM resumen_reportes';
       } else {
-        // sql = 'SELECT * FROM resumen_reportes';
         sql = `select 
                 u.nombre, 
                 u.id as ci, 
@@ -25,20 +33,27 @@ export class DashboardRepository implements DashboardRepo {
                 where u.rol = 'EST'
                 order by u.id desc;`;
       }
-      const result = await pool.query(sql);
+      const rows = await dynamicQuery.executeQuery(sql);
       logger.info(
         'Finaliza con éxito el proceso para obtener estudiantes sin incidencias',
       );
-      return result ? result.rows : [];
+      return rows ? rows : [];
     } catch (error) {
       logger.error('Error obteniendo el estudiantes sin incidencias');
       throw error;
     }
   }
 
-  async getIncidentsByStudentId(id: String): Promise<ReportResume[]> {
+  async getIncidentsByStudentId(
+    connectionDb: string,
+    id: String,
+  ): Promise<ReportResume[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener un estudiante');
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
       // let sql = `SELECT * FROM resumen_reportes WHERE id_examenes_usuarios = ${id}`;
       let sql = `select
       eu.examen_id,
@@ -56,11 +71,11 @@ export class DashboardRepository implements DashboardRepo {
       where u.id=${id}
       group by 
       eu.examen_id, e.descripcion, e.fecha,  eu.id;`;
-      const result = await pool.query(sql);
+      const rows = await dynamicQuery.executeQuery(sql);
       logger.info(
         'Finaliza con éxito el proceso para obtener datos de estudiante por examen',
       );
-      return result ? result.rows : [];
+      return rows ? rows : [];
     } catch (error) {
       logger.error('Error obteniendo datos de estudiante por examen');
       throw error;

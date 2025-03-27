@@ -3,7 +3,7 @@ import { DashboardRepository } from '../../infrastructure/repositories/dashboard
 export class GetStudentIncident {
   constructor(private dashboardRepo: DashboardRepository) {}
 
-  async execute(isCount?: boolean) {
-    return await this.dashboardRepo.getStudentIncident(isCount);
+  async execute(connectionDb: string, isCount?: boolean) {
+    return await this.dashboardRepo.getStudentIncident(connectionDb, isCount);
   }
 }
