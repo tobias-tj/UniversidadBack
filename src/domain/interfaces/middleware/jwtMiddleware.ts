@@ -12,6 +12,7 @@ interface DecodedToken {
   email: string;
   creationTime: number;
   expireTime: number;
+  moodleUrl: string;
 }
 
 dotenv.config();
@@ -35,6 +36,7 @@ export const decodeToken = (token: string): DecodedToken | null => {
       email: decoded.email,
       creationTime: decoded.creationTime,
       expireTime: decoded.expireTime,
+      moodleUrl: decoded.moodleUrl,
     };
   } catch (error) {
     console.error('Error al decodificar el token:', error);
