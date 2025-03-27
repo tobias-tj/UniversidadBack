@@ -45,6 +45,17 @@ export class ResumeReportController {
     next: NextFunction,
   ) {
     try {
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
       const error = validationResult(req);
       if (!error.isEmpty()) {
         return res.status(400).json({ errors: error.array() });
@@ -52,8 +63,10 @@ export class ResumeReportController {
 
       const idRelacion = Number.parseInt(req.query.idrelacion as string);
 
-      const reportList =
-        await this.ResumeReportByIdRelation.execute(idRelacion);
+      const reportList = await this.ResumeReportByIdRelation.execute(
+        idRelacion,
+        decoded.connectionDb,
+      );
 
       return res.status(200).json({
         message: 'Report Generado Correctamente',
