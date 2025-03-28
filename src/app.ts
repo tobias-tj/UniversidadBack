@@ -13,6 +13,7 @@ const corsOptions = {
     'http://161.35.53.140:5173',
     'http://161.35.53.140:5174',
     'http://localhost:3010',
+    'http://161.35.53.140',
   ],
 };
 app.use(cors(corsOptions));
