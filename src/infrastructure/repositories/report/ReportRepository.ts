@@ -2,14 +2,23 @@ import { ReportById } from '../../../domain/entities/ReportById';
 import { ReportsRepo } from '../../../domain/interfaces/repositories/ReportsRepo';
 import { reportMapperById } from '../../../mappers/ReportMapper';
 import { pool } from '../../database/dbConnection';
+import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class ReportRepository implements ReportsRepo {
-  async getAllReportByIdRelation(idRelacion: number): Promise<ReportById[]> {
+  async getAllReportByIdRelation(
+    idRelacion: number,
+    connectionDb: string,
+  ): Promise<ReportById[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(
         'Inicia proceso para obtener todos los reportes según idRelacion',
       );
+
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
 
       const query = `
            SELECT 
@@ -27,10 +36,10 @@ export class ReportRepository implements ReportsRepo {
             WHERE r.id_examenes_usuarios = $1
             LIMIT 20;
           `;
-      const result = await pool.query(query, [idRelacion]);
+      const rows = await dynamicQuery.executeQuery(query, [idRelacion]);
 
-      if (result && result.rows.length > 0) {
-        return result.rows.map(reportMapperById);
+      if (rows && rows.length > 0) {
+        return rows.map(reportMapperById);
       }
 
       logger.warn(
@@ -48,9 +57,7 @@ export class ReportRepository implements ReportsRepo {
 
   async getAllReportPerDay(days: string): Promise<any> {
     try {
-      logger.info(
-        'Inicia proceso para obtener count de reportes',
-      );
+      logger.info('Inicia proceso para obtener count de reportes');
 
       const query = `
               SELECT 

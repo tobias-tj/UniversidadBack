@@ -13,12 +13,16 @@ interface DecodedToken {
   creationTime: number;
   expireTime: number;
   moodleUrl: string;
+  idUniversidad: number;
+  emailAdmin: string;
+  passwordAdmin: string;
+  connectionDb: string;
 }
 
 dotenv.config();
 const key = process.env.JWT_PRIVATE_KEY;
 
-const SECRET_KEY = key; // Asegúrate de que este valor sea seguro y no esté hardcodeado en tu código.
+export const SECRET_KEY = key; // Asegúrate de que este valor sea seguro y no esté hardcodeado en tu código.
 
 export const decodeToken = (token: string): DecodedToken | null => {
   try {
@@ -36,8 +40,12 @@ export const decodeToken = (token: string): DecodedToken | null => {
       email: decoded.email,
       creationTime: decoded.creationTime,
       expireTime: decoded.expireTime,
-      moodleUrl: decoded.moodleUrl, 
-   };
+      moodleUrl: decoded.moodleUrl,
+      idUniversidad: decoded.idUniversidad,
+      emailAdmin: decoded.emailAdmin,
+      passwordAdmin: decoded.passwordAdmin,
+      connectionDb: decoded.connectionDb,
+    };
   } catch (error) {
     console.error('Error al decodificar el token:', error);
     return null;

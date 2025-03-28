@@ -4,7 +4,7 @@ import { DashboardRepo } from '../../domain/interfaces/repositories/DashboardRep
 export class GetIncidentsByStudentId {
   constructor(private dashboardRepo: DashboardRepo) {}
 
-  async execute(id: string): Promise<ReportResume[]> {
-    return await this.dashboardRepo.getIncidentsByStudentId(id);
+  async execute(connectionDb: string, id: string): Promise<ReportResume[]> {
+    return await this.dashboardRepo.getIncidentsByStudentId(connectionDb, id);
   }
 }

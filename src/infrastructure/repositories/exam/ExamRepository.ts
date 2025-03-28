@@ -2,6 +2,7 @@ import { Exam } from '../../../domain/entities/Exam';
 import { ExamCount } from '../../../domain/entities/ExamCount';
 import { ExamRepo } from '../../../domain/interfaces/repositories/ExamRepo';
 import { pool } from '../../database/dbConnection';
+import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class ExamRepository implements ExamRepo {
@@ -137,11 +138,17 @@ export class ExamRepository implements ExamRepo {
   }
 
   // Obtener de una vez todos los count que tengan que ver con TotalExamenes, TotalExamenesIncident y TotalExamenesClean
-  async getAllTotalExamCount(): Promise<ExamCount> {
+  async getAllTotalExamCount(connectionDb: string): Promise<ExamCount> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(
         'Inicia proceso para obtener el total de examenes, con incidencias y limpios',
       );
+
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
       const query = `
          WITH total_examenes_cte AS (
       SELECT COUNT(*) AS total_examenes
@@ -158,12 +165,12 @@ export class ExamRepository implements ExamRepo {
       LEFT JOIN 
           resumen_reportes rr ON eu.id = rr.id_examenes_usuarios;
       `;
-      const result = await pool.query(query);
+      const rows = await dynamicQuery.executeQuery(query);
       logger.info(
         'Finaliza con exitos el proceso para obtener el total de examenes de los diferentes tipos',
       );
-      if (result && result.rows.length > 0) {
-        const row = result.rows[0];
+      if (rows && rows.length > 0) {
+        const row = rows[0];
         return {
           total_examenes: row.total_examenes,
           total_examenes_con_incidencias: row.total_examenes_con_incidencias,
@@ -181,11 +188,18 @@ export class ExamRepository implements ExamRepo {
     }
   }
 
-  // este deberia de ser getListStudentByExamId
   //-- para obtener usuarios por examenes
-  async getListStudentByExamId(examId: number): Promise<any[]> {
+  async getListStudentByExamId(
+    examId: number,
+    connectionDb: string,
+  ): Promise<any[]> {
     try {
-      const result = await pool.query(
+      let dynamicQuery: DynamicDbQuery | null = null;
+
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const rows = await dynamicQuery.executeQuery(
         `
         select
         u.nombre,
@@ -209,7 +223,7 @@ export class ExamRepository implements ExamRepo {
       `,
         [examId],
       );
-      return result.rows;
+      return rows ?? [];
     } catch (error) {
       logger.error(
         'Error obteniendo exámenes por el id del examen con incidencias: ' +
@@ -219,9 +233,14 @@ export class ExamRepository implements ExamRepo {
     }
   }
 
-  async getAllListExamInfo(): Promise<any[]> {
+  async getAllListExamInfo(connectionDb: string): Promise<any[]> {
     try {
-      const result = await pool.query(
+      let dynamicQuery: DynamicDbQuery | null = null;
+
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const rows = await dynamicQuery.executeQuery(
         `
         SELECT 
           id, 
@@ -232,7 +251,7 @@ export class ExamRepository implements ExamRepo {
         `,
       );
 
-      return result.rows;
+      return rows ?? [];
     } catch (error) {
       logger.error('Error obteniendo exámenes: ' + error);
       throw error;

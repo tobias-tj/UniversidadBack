@@ -5,17 +5,25 @@ import { pool } from '../../database/dbConnection';
 import { logger } from '../../logger';
 import { IncidentsCount } from '../../../domain/entities/IncidentsCount';
 import { newStudent } from '../../../domain/entities/newStudent';
+import { DynamicDbQuery } from '../../database/DynamicQuery';
 
 export class DashboardRepository implements DashboardRepo {
-  async getStudentIncident(isCount?: boolean): Promise<newStudent[]> {
+  async getStudentIncident(
+    connectionDb: string,
+    isCount?: boolean,
+  ): Promise<newStudent[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener un estudiante');
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
       let sql = '';
       if (isCount === true) {
         sql =
           'SELECT COUNT(DISTINCT id_examenes_usuarios) AS unique_examen_count FROM resumen_reportes';
       } else {
-        // sql = 'SELECT * FROM resumen_reportes';
         sql = `select 
                 u.nombre, 
                 u.id as ci, 
@@ -24,20 +32,27 @@ export class DashboardRepository implements DashboardRepo {
                 where u.rol = 'EST'
                 order by u.id desc;`;
       }
-      const result = await pool.query(sql);
+      const rows = await dynamicQuery.executeQuery(sql);
       logger.info(
         'Finaliza con éxito el proceso para obtener estudiantes sin incidencias',
       );
-      return result ? result.rows : [];
+      return rows ? rows : [];
     } catch (error) {
       logger.error('Error obteniendo el estudiantes sin incidencias');
       throw error;
     }
   }
 
-  async getIncidentsByStudentId(id: String): Promise<ReportResume[]> {
+  async getIncidentsByStudentId(
+    connectionDb: string,
+    id: String,
+  ): Promise<ReportResume[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener un estudiante');
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
       // let sql = `SELECT * FROM resumen_reportes WHERE id_examenes_usuarios = ${id}`;
       let sql = `select
       eu.examen_id,
@@ -55,11 +70,11 @@ export class DashboardRepository implements DashboardRepo {
       where u.id=${id}
       group by 
       eu.examen_id, e.descripcion, e.fecha,  eu.id;`;
-      const result = await pool.query(sql);
+      const rows = await dynamicQuery.executeQuery(sql);
       logger.info(
         'Finaliza con éxito el proceso para obtener datos de estudiante por examen',
       );
-      return result ? result.rows : [];
+      return rows ? rows : [];
     } catch (error) {
       logger.error('Error obteniendo datos de estudiante por examen');
       throw error;
@@ -93,9 +108,14 @@ LEFT JOIN
     }
   }
 
-  async getAllStudentsCount(): Promise<IncidentsCount> {
+  async getAllStudentsCount(connectionDb: string): Promise<IncidentsCount> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener un estudiante');
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
       const query = `
   WITH total_estudiantes_cte AS (
   SELECT COUNT(*) AS total_estudiantes
@@ -119,28 +139,35 @@ LEFT JOIN
   LEFT JOIN 
       estudiantes_con_incidencias_cte eci ON er.estudiante_id = eci.estudiante_id;
     `;
-      const result = await pool.query(query);
-      logger.info(
-        'Finaliza con éxito el proceso para obtener datos de estudiante por examen',
-      );
-      if (result && result.rows.length > 0) {
-        const row = result.rows[0];
+      const rows = await dynamicQuery.executeQuery(query);
+
+      if (!rows || rows.length === 0) {
+        logger.warn('La consulta no devolvió resultados');
         return {
-          total_estudiantes: row.total_estudiantes,
-          total_estudiantes_con_incidencias:
-            row.total_estudiantes_con_incidencias,
-          total_estudiantes_sin_incidencias:
-            row.total_estudiantes_sin_incidencias,
+          total_estudiantes: '',
+          total_estudiantes_con_incidencias: '',
+          total_estudiantes_sin_incidencias: '',
         } as IncidentsCount;
       }
-      return {
-        total_estudiantes: '',
-        total_estudiantes_con_incidencias: '',
-        total_estudiantes_sin_incidencias: '',
-      } as IncidentsCount;
+
+      const row = rows[0];
+      const response: IncidentsCount = {
+        total_estudiantes: row.total_estudiantes || 0,
+        total_estudiantes_con_incidencias:
+          row.total_estudiantes_con_incidencias || 0,
+        total_estudiantes_sin_incidencias:
+          row.total_estudiantes_sin_incidencias || 0,
+      };
+
+      logger.info('Proceso completado con éxito. Resultados:', response);
+      return response;
     } catch (error) {
       logger.error('Error obteniendo datos de estudiante por examen');
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+      }
     }
   }
 }

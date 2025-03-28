@@ -2,18 +2,23 @@ import { AnuncioCreate } from '../../../domain/entities/AnuncioCreate';
 import { Anuncios } from '../../../domain/entities/Anuncios';
 import { AnuncioRepo } from '../../../domain/interfaces/repositories/AnuncioRepo';
 import { pool } from '../../database/dbConnection';
+import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class AnuncioRepository implements AnuncioRepo {
-  async getAnuncios(): Promise<Anuncios[]> {
+  async getAnuncios(connectionDb: string): Promise<Anuncios[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener los anuncios');
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
       const query = `SELECT * FROM Anuncios`;
-      const result = await pool.query(query);
-      console.log('Ingresando para ver los anuncios', result);
+      const rows = await dynamicQuery.executeQuery(query);
       logger.info('Finaliza con éxito el proceso para obtener los anuncios');
 
-      return result.rows || [];
+      return rows || [];
     } catch (error) {
       logger.error('Error obteniendo los anuncios', { error });
       throw new Error('Error obteniendo los anuncios desde la base de datos');
@@ -38,9 +43,12 @@ export class AnuncioRepository implements AnuncioRepo {
     }
   }
 
-  async updateAnuncioById(id: number): Promise<boolean> {
+  async updateAnuncioById(id: number, connectionDb: string): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(`Inicia proceso para actualizar el anuncio con ID: ${id}`);
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
 
       const query = `
             UPDATE anuncios
@@ -48,9 +56,9 @@ export class AnuncioRepository implements AnuncioRepo {
             WHERE id = $1`;
       const values = [id];
 
-      const result = await pool.query(query, values);
+      const rows = await dynamicQuery.executeQuery(query, values);
 
-      if (result.rowCount === 0) {
+      if (rows.length === 0) {
         logger.warn(`No se encontró ningún anuncio con ID: ${id}`);
         return false;
       }

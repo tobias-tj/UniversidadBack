@@ -4,6 +4,7 @@ import { logger } from '../../infrastructure/logger';
 import { NextFunction, Request, Response } from 'express';
 import { CreateAnuncio } from '../../usecases/anuncios/CreateAnuncio';
 import { UpdateAnuncioById } from '../../usecases/anuncios/UpdateAnuncioById';
+import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
 
 export class AnunciosController {
   constructor(
@@ -14,13 +15,20 @@ export class AnunciosController {
 
   async getAllAnuncios(req: Request, res: Response, next: NextFunction) {
     try {
-      const errors = validationResult(req);
-      logger.info('Inicia proceso para obtener anuncios');
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
       }
-      const anunciosList = await this.getTotalAnuncios.execute();
-      console.log(anunciosList);
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
+      const anunciosList = await this.getTotalAnuncios.execute(
+        decoded.connectionDb,
+      );
       logger.info('Termina proceso para obtener anuncios');
 
       if (!anunciosList.length) {
@@ -67,12 +75,28 @@ export class AnunciosController {
   ): Promise<void> {
     try {
       logger.info('Inicia proceso para cambiar status de visto del anuncio');
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        res.status(401).json({ error: 'Token no proporcionado' });
+        return;
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        res.status(401).json({ error: 'Token inválido' });
+        return;
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
       }
-      const anuncioStatus = await this.updateAnuncioStatus.execute(req.body.id);
+      const anuncioStatus = await this.updateAnuncioStatus.execute(
+        req.body.id,
+        decoded.connectionDb,
+      );
       logger.info('Anuncio actualizado con exito');
       if (anuncioStatus) {
         res.status(200).json({ data: 'Anuncio actualizado con Exito' });

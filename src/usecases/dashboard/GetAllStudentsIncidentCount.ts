@@ -5,7 +5,7 @@ import { DashboardRepository } from '../../infrastructure/repositories/dashboard
 export class GetAllStudentsIncidentCount {
   constructor(private dashboardRepo: DashboardRepo) {}
 
-  async execute(): Promise<IncidentsCount> {
-    return await this.dashboardRepo.getAllStudentsCount();
+  async execute(connectionDb: string): Promise<IncidentsCount> {
+    return await this.dashboardRepo.getAllStudentsCount(connectionDb);
   }
 }
