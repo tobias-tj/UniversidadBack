@@ -15,8 +15,11 @@ const corsOptions = {
     'http://localhost:3010',
     'http://161.35.53.140',
   ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 };
-app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Inicio del servidor
 const startServer = async () => {
