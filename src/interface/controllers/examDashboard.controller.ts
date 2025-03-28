@@ -82,8 +82,22 @@ export class ExamDashboardController {
     next: NextFunction,
   ) {
     try {
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
       const { examId } = req.params;
-      const exams = await examRepo.getListStudentByExamId(Number(examId));
+      const exams = await examRepo.getListStudentByExamId(
+        Number(examId),
+        decoded.connectionDb,
+      );
 
       if (!exams.length) {
         return res.status(200).json({
@@ -100,7 +114,18 @@ export class ExamDashboardController {
 
   async getAllListExamInfo(req: Request, res: Response, next: NextFunction) {
     try {
-      const exams = await examRepo.getAllListExamInfo();
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
+      const exams = await examRepo.getAllListExamInfo(decoded.connectionDb);
       res.status(200).json(exams);
     } catch (error) {
       next(error);

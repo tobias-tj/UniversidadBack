@@ -188,11 +188,18 @@ export class ExamRepository implements ExamRepo {
     }
   }
 
-  // este deberia de ser getListStudentByExamId
   //-- para obtener usuarios por examenes
-  async getListStudentByExamId(examId: number): Promise<any[]> {
+  async getListStudentByExamId(
+    examId: number,
+    connectionDb: string,
+  ): Promise<any[]> {
     try {
-      const result = await pool.query(
+      let dynamicQuery: DynamicDbQuery | null = null;
+
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const rows = await dynamicQuery.executeQuery(
         `
         select
         u.nombre,
@@ -216,7 +223,7 @@ export class ExamRepository implements ExamRepo {
       `,
         [examId],
       );
-      return result.rows;
+      return rows ?? [];
     } catch (error) {
       logger.error(
         'Error obteniendo exámenes por el id del examen con incidencias: ' +
@@ -226,9 +233,14 @@ export class ExamRepository implements ExamRepo {
     }
   }
 
-  async getAllListExamInfo(): Promise<any[]> {
+  async getAllListExamInfo(connectionDb: string): Promise<any[]> {
     try {
-      const result = await pool.query(
+      let dynamicQuery: DynamicDbQuery | null = null;
+
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const rows = await dynamicQuery.executeQuery(
         `
         SELECT 
           id, 
@@ -239,7 +251,7 @@ export class ExamRepository implements ExamRepo {
         `,
       );
 
-      return result.rows;
+      return rows ?? [];
     } catch (error) {
       logger.error('Error obteniendo exámenes: ' + error);
       throw error;
