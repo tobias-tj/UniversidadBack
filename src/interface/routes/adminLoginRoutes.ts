@@ -21,7 +21,7 @@ router.post(
 );
 
 router.get(
-  '/admin/getUniversity',
+  '/getUniversity',
   (req: Request, res: Response, next: NextFunction) =>
     adminController.getUniversity(req, res, next),
 );
