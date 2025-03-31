@@ -22,6 +22,11 @@ export class AnuncioRepository implements AnuncioRepo {
     } catch (error) {
       logger.error('Error obteniendo los anuncios', { error });
       throw new Error('Error obteniendo los anuncios desde la base de datos');
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
@@ -68,6 +73,11 @@ export class AnuncioRepository implements AnuncioRepo {
     } catch (error) {
       logger.error('Error actualizando el anuncio', { error });
       throw new Error('Error actualizando el anuncio en la base de datos');
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 }

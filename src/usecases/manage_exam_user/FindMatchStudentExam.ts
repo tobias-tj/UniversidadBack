@@ -3,7 +3,11 @@ import { ManageExamUserRepo } from '../../domain/interfaces/repositories/ManageE
 export class FindMatchStudentExam {
   constructor(private manageExamUser: ManageExamUserRepo) {}
 
-  async execute(idExamen: number, idUsuario: number) {
-    return await this.manageExamUser.findMatchUserAndExam(idExamen, idUsuario);
+  async execute(idExamen: number, idUsuario: number, connectionDb: string) {
+    return await this.manageExamUser.findMatchUserAndExam(
+      idExamen,
+      idUsuario,
+      connectionDb,
+    );
   }
 }

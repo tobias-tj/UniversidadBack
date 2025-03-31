@@ -4,14 +4,14 @@ import { AdminController } from '../controllers/admin.controller';
 import { Login } from '../../usecases/admin_login/login';
 import { adminLoginValidation } from '../../domain/interfaces/middleware/adminLoginValidation';
 import { UpdatePassword } from '../../usecases/admin_login/updatePassword';
-import { GetUniversity } from '../../usecases/admin_login/getUniversity';
+import { GetUniversityList } from '../../usecases/admin_login/GetUniversityList';
 
 const router = Router();
 
 const adminRepository = new AdminRepository();
 const auth = new Login(adminRepository);
 const updatePass = new UpdatePassword(adminRepository);
-const universidadList = new GetUniversity(adminRepository);
+const universidadList = new GetUniversityList(adminRepository);
 
 const adminController = new AdminController(auth, updatePass, universidadList);
 

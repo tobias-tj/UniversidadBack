@@ -52,6 +52,11 @@ export class ReportRepository implements ReportsRepo {
         error,
       );
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 

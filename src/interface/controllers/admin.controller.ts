@@ -5,13 +5,13 @@ import { Login } from '../../usecases/admin_login/login';
 import jwt from 'jsonwebtoken';
 import { UpdatePassword } from '../../usecases/admin_login/updatePassword';
 import { SECRET_KEY } from '../../domain/interfaces/middleware/jwtMiddleware';
-import { GetUniversity } from '../../usecases/admin_login/getUniversity';
+import { GetUniversityList } from '../../usecases/admin_login/GetUniversityList';
 
 export class AdminController {
   constructor(
     private auth: Login,
     private updatePass: UpdatePassword,
-    private getUniList: GetUniversity,
+    private getUniList: GetUniversityList,
   ) {}
 
   async login(req: Request, res: Response, next: NextFunction) {
