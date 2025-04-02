@@ -7,8 +7,8 @@ import { CreateStartTime } from '../../usecases/manage_exam_user/StartTimeExam';
 import { createExamStartTimeValidation } from '../../domain/interfaces/middleware/manageExamStartTimeValidation';
 import { CreateFinishTime } from '../../usecases/manage_exam_user/FinishTimeExam';
 import { validateIncident } from '../../domain/interfaces/middleware/manageExamIncidentValidation';
-import { ManageExamIncident } from "../../usecases/manage_exam_user/ManageExamIncident";
-import { ManageExamIncidentRepository } from "../../infrastructure/repositories/manage_exam_user/ManageExamIncidentRepository";
+import { ManageExamIncident } from '../../usecases/manage_exam_user/ManageExamIncident';
+import { ManageExamIncidentRepository } from '../../infrastructure/repositories/manage_exam_user/ManageExamIncidentRepository';
 
 const router = Router();
 
@@ -17,8 +17,9 @@ const manageExamFaceId = new CreateFaceId(manageExamUserRepository);
 const manageStartTime = new CreateStartTime(manageExamUserRepository);
 const manageFinishTime = new CreateFinishTime(manageExamUserRepository);
 const manageExamIncidentRepo = new ManageExamIncidentRepository();
-const manageExamIncidentUseCase = new ManageExamIncident(manageExamIncidentRepo);
-
+const manageExamIncidentUseCase = new ManageExamIncident(
+  manageExamIncidentRepo,
+);
 
 const manageExamUserController = new ManageExamController(
   manageExamFaceId,
@@ -27,6 +28,7 @@ const manageExamUserController = new ManageExamController(
   manageExamIncidentUseCase,
 );
 
+// Sacar de Produccion
 router.patch(
   '/manageFaceId',
   [...createExamFaceIdValidation],
@@ -49,7 +51,7 @@ router.patch(
 );
 
 router.post(
-  "/manageReportExam",
+  '/manageReportExam',
   validateIncident,
   (req: Request, res: Response, next: NextFunction) =>
     manageExamUserController.manageIncidentExam(req, res, next),

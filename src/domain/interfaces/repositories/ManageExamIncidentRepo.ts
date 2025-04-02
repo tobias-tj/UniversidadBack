@@ -4,5 +4,6 @@ export interface ManageExamIncidentRepo {
     incidentType: string,
     time: Date,
     img: string,
+    connectionDb: string,
   ): Promise<void>;
 }

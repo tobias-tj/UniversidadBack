@@ -111,26 +111,35 @@ export class ManageExamController {
     }
   }
 
-  async manageIncidentExam(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async manageIncidentExam(req: Request, res: Response, next: NextFunction) {
     try {
-      const { createId, time, incidentType, img } = req.body;
+      const { createId, time, incidentType, img, token } = req.body;
+
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
 
       logger.info(
         `Procesando incidente: ${incidentType} para relación ID: ${createId}`,
       );
+
       await this.manageExamIncident.execute(
         createId,
         incidentType,
         new Date(time),
         img,
+        decoded!.connectionDb,
       );
 
-      res.status(200).json({ message: 'Incidente registrado exitosamente.' });
-      return;
+      return res
+        .status(200)
+        .json({ message: 'Incidente registrado exitosamente.' });
     } catch (error) {
       next(error);
     }
