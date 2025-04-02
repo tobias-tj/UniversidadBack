@@ -5,8 +5,8 @@ export interface ManageExamUserRepo {
     connectionDb: string,
   ): Promise<number | null>;
   createFaceId(idFace: string, idUser: number): Promise<boolean>;
-  createStartTime(creationId: number): Promise<boolean>;
-  createFinishTime(creationId: number): Promise<boolean>;
+  createStartTime(creationId: number, connectionDb: string): Promise<boolean>;
+  createFinishTime(creationId: number, connectionDb: string): Promise<boolean>;
   findMatchUserAndExam(
     idExamen: number,
     idUsuario: number,

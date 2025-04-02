@@ -52,9 +52,15 @@ export class ManageExamController {
       }
 
       const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
 
       logger.info(createdId, 'Controller manageStartTimeExam CreatedId');
-      const processStartExam = await this.createStartTime.execute(createdId);
+      const processStartExam = await this.createStartTime.execute(
+        createdId,
+        decoded.connectionDb,
+      );
 
       if (!processStartExam) {
         return res.status(409);
@@ -76,8 +82,22 @@ export class ManageExamController {
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { createdId } = req.body;
-      const processFinishExam = await this.createFinishTime.execute(createdId);
+      const { createdId, token } = req.body;
+
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
+      const processFinishExam = await this.createFinishTime.execute(
+        createdId,
+        decoded.connectionDb,
+      );
 
       if (!processFinishExam) {
         return res.status(409);

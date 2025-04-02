@@ -54,12 +54,19 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
     }
   }
 
-  async createStartTime(creationId: number): Promise<boolean> {
+  async createStartTime(
+    creationId: number,
+    connectionDb: string,
+  ): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(
         'Inicia proceso para guardar el horario del comienzo del examen.',
       );
-      const result = await pool.query(
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      await dynamicQuery.executeQuery(
         'UPDATE examenes_usuarios SET inicio_examen = NOW() WHERE id = $1',
         [creationId],
       );
@@ -71,15 +78,28 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
           error,
       );
       return false;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
-  async createFinishTime(creationId: number): Promise<boolean> {
+  async createFinishTime(
+    creationId: number,
+    connectionDb: string,
+  ): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(
         'Inicia proceso para guardar el horario de finalizacion del examen.',
       );
-      await pool.query(
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      await dynamicQuery.executeQuery(
         'UPDATE examenes_usuarios SET fin_examen = NOW() WHERE id = $1',
         [creationId],
       );
@@ -93,6 +113,11 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
           error,
       );
       return false;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
