@@ -8,12 +8,14 @@ export class ManageExamIncident {
     incidentType: string,
     time: Date,
     img: string,
+    connectionDb: string,
   ): Promise<void> {
     await this.manageExamIncidentRepo.createIncident(
       createId,
       incidentType,
       time,
       img,
+      connectionDb,
     );
   }
 }

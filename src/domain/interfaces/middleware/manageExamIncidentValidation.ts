@@ -24,4 +24,9 @@ export const validateIncident = [
     .withMessage(
       "La imagen debe tener un formato Base64 válido con el prefijo 'data:image/'.",
     ),
+  body('token')
+    .notEmpty()
+    .withMessage('El token es obligatorio.')
+    .isString()
+    .withMessage('El token debe ser un texto.'),
 ];

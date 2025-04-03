@@ -3,6 +3,7 @@ import { Student } from '../../../domain/entities/Student';
 import { CustomError } from '../../../domain/interfaces/middleware/errorHandler';
 import { StudentRepo } from '../../../domain/interfaces/repositories/StudentRepo';
 import { pool } from '../../database/dbConnection';
+import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class StudentRepository implements StudentRepo {
@@ -25,14 +26,19 @@ export class StudentRepository implements StudentRepo {
     }
   }
 
-  async findById(id: number): Promise<Student | null> {
+  async findById(id: number, connectionDb: string): Promise<Student | null> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener un estudiante');
-      const result = await pool.query('SELECT * FROM usuarios WHERE id = $1', [
-        id,
-      ]);
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
 
-      if (result.rows.length === 0) {
+      const rows = await dynamicQuery.executeQuery(
+        'SELECT * FROM usuarios WHERE id = $1',
+        [id],
+      );
+
+      if (rows.length === 0) {
         logger.info(`No se encontró el estudiante con el ID: ${id}`);
         return null;
       }
@@ -40,17 +46,27 @@ export class StudentRepository implements StudentRepo {
       logger.info(
         'Finaliza con exito el proceso para obtener el estudiante por el id',
       );
-      return result.rows[0];
+      return rows[0];
     } catch (error) {
       logger.error('Error obteniendo el estudiante por su Id');
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
-  async create(student: Student): Promise<boolean> {
+  async create(student: Student, connectionDb: string): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para crear un nuevo estudiante');
-      await pool.query(
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      await dynamicQuery.executeQuery(
         'INSERT INTO usuarios (id, nombre, email, rol) VALUES ($1, $2, $3, $4)',
         [student.id, student.fullname, student.email, student.rol],
       );
@@ -60,6 +76,11 @@ export class StudentRepository implements StudentRepo {
     } catch (error) {
       logger.error('Error creando estudiante: ' + error);
       return false;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
   async update(student: Student): Promise<void> {
@@ -118,16 +139,22 @@ export class StudentRepository implements StudentRepo {
     }
   }
 
-  async findByIdCheckout(id: number): Promise<boolean> {
+  async findByIdCheckout(id: number, connectionDb: string): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener un estudiante');
-      const result = await pool.query(
+      // Crear conexión dinámica
+      console.warn('Inicio de connexion con-->', connectionDb);
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const rows = await dynamicQuery.executeQuery(
         'SELECT EXISTS(SELECT 1 FROM usuarios WHERE id = $1);',
         [id],
       );
 
       // Accede al valor booleano directamente
-      const exists = result.rows[0].exists;
+      const exists = rows[0].exists;
 
       if (!exists) {
         logger.info(`No se encontró el estudiante con el ID: ${id}`);
@@ -141,6 +168,11 @@ export class StudentRepository implements StudentRepo {
     } catch (error) {
       logger.error('Error obteniendo el estudiante por su Id');
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 

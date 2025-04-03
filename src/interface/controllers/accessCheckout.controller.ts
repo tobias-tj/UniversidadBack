@@ -1,10 +1,17 @@
-import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
+import {
+  decodeToken,
+  generateToken,
+} from '../../domain/interfaces/middleware/jwtMiddleware';
 import { logger } from '../../infrastructure/logger';
 import { GetStudentByIdCheckout } from '../../usecases/students/GetStudenByIdCheckout';
 import { NextFunction, Request, Response } from 'express';
+import { Login } from '../../usecases/admin_login/login';
 
 export class AccessCheckoutController {
-  constructor(private findStudentByIdUseCase: GetStudentByIdCheckout) {}
+  constructor(
+    private findStudentByIdUseCase: GetStudentByIdCheckout,
+    private auth: Login,
+  ) {}
 
   async handleAccessCheckoutProcess(
     req: Request,
@@ -24,30 +31,70 @@ export class AccessCheckoutController {
         return res.status(401);
       }
 
-      // Ahora puedes decodificar el token y obtener los datos que necesitas
-      const decoded = decodeToken(token); // Utiliza tu función de decodificación aquí
+      const decoded = decodeToken(token);
 
       console.log(decoded);
 
-      const studentExist = await this.findStudentByIdUseCase.execute(
-        Number(decoded?.userId),
+      if (
+        !decoded?.idUniversidad ||
+        !decoded?.emailAdmin ||
+        !decoded?.passAdmin
+      ) {
+        return res
+          .status(401)
+          .json({ error: 'Error autenticando Token, faltan datos' });
+      }
+
+      const authData = await this.auth.execute(
+        decoded.idUniversidad,
+        decoded.emailAdmin,
+        decoded.passAdmin,
       );
 
-      // console.log(studentExist);
+      if (!authData) {
+        return res.status(401).json({
+          errors: [
+            {
+              msg: 'Credenciales inválidas o falta connectionDb',
+              path: 'auth',
+            },
+          ],
+        });
+      }
+
+      const { connectionDb, user } = JSON.parse(authData);
+
+      console.warn(connectionDb);
+
+      // Crear un nuevo token con los datos originales más la nuaeva información
+      const newTokenData = {
+        ...decoded,
+        connectionDb: connectionDb,
+      };
+
+      // Generar un nuevo token con los datos completos
+      const newToken = generateToken(newTokenData);
+
+      const studentExist = await this.findStudentByIdUseCase.execute(
+        Number(decoded?.userId),
+        connectionDb,
+      );
 
       if (!studentExist) {
         res.status(200).json({
           isExist: false,
           moddleUrl: decoded!.moodleUrl,
+          token: newToken,
         });
       }
 
       return res.status(200).json({
         isExist: true,
         moddleUrl: decoded!.moodleUrl,
+        token: newToken,
       });
     } catch (error) {
-      logger.info("Entro en tryCatch de AccessCheckout")
+      logger.info('Entro en tryCatch de AccessCheckout');
       next(error);
     }
   }

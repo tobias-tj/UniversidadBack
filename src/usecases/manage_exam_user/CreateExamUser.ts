@@ -3,7 +3,7 @@ import { ManageExamUserRepo } from '../../domain/interfaces/repositories/ManageE
 export class CreateExamUser {
   constructor(private manageExamUser: ManageExamUserRepo) {}
 
-  async execute(idExamen: number, idUsuario: number) {
-    return await this.manageExamUser.create(idExamen, idUsuario);
+  async execute(idExamen: number, idUsuario: number, connectionDb: string) {
+    return await this.manageExamUser.create(idExamen, idUsuario, connectionDb);
   }
 }

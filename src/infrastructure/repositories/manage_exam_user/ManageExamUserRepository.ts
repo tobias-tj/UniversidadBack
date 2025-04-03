@@ -1,22 +1,37 @@
 import { ManageExamUserRepo } from '../../../domain/interfaces/repositories/ManageExamUserRepo';
 import { pool } from '../../database/dbConnection';
+import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class ManageExamUserRepository implements ManageExamUserRepo {
-  async create(idExamen: number, idUsuario: number): Promise<number | null> {
+  async create(
+    idExamen: number,
+    idUsuario: number,
+    connectionDb: string,
+  ): Promise<number | null> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para guardar datos en examenesUsuarios');
-      const result = await pool.query(
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const rows = await dynamicQuery.executeQuery(
         'INSERT INTO examenes_usuarios (examen_id, estudiante_id) VALUES ($1, $2) RETURNING id',
         [idExamen, idUsuario],
       );
       logger.info('Datos guardados correctamente para examenesUsuarios');
 
-      const insertedId = result.rows[0]?.id;
+      const insertedId = rows[0]?.id;
       return insertedId || null;
     } catch (error) {
       logger.error('Error guardando datos en examenesUsuarios: ' + error);
       return null;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
@@ -39,12 +54,19 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
     }
   }
 
-  async createStartTime(creationId: number): Promise<boolean> {
+  async createStartTime(
+    creationId: number,
+    connectionDb: string,
+  ): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(
         'Inicia proceso para guardar el horario del comienzo del examen.',
       );
-      const result = await pool.query(
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      await dynamicQuery.executeQuery(
         'UPDATE examenes_usuarios SET inicio_examen = NOW() WHERE id = $1',
         [creationId],
       );
@@ -56,15 +78,28 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
           error,
       );
       return false;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
-  async createFinishTime(creationId: number): Promise<boolean> {
+  async createFinishTime(
+    creationId: number,
+    connectionDb: string,
+  ): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(
         'Inicia proceso para guardar el horario de finalizacion del examen.',
       );
-      await pool.query(
+      // Crear conexión dinámica
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      await dynamicQuery.executeQuery(
         'UPDATE examenes_usuarios SET fin_examen = NOW() WHERE id = $1',
         [creationId],
       );
@@ -78,23 +113,33 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
           error,
       );
       return false;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
   async findMatchUserAndExam(
     idExamen: number,
     idUsuario: number,
+    connectionDb: string,
   ): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info(
         'Inicia proceso para averiguar si existe una relacion de examen y estudiante.',
       );
-      const result = await pool.query(
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const rows = await dynamicQuery.executeQuery(
         'SELECT EXISTS(SELECT 1 FROM examenes_usuarios WHERE examen_id = $1 AND estudiante_id = $2);',
         [idExamen, idUsuario],
       );
       // Accedemos al valor booleano directamente
-      const exists = result.rows[0].exist;
+      const exists = rows[0].exist;
 
       if (!exists) {
         logger.info('No existe una relacion estudiante y examen');
@@ -110,6 +155,11 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
         'Error tratando de encontrar una relacion entre estudiante y examen',
       );
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 }

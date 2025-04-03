@@ -40,6 +40,11 @@ export class DashboardRepository implements DashboardRepo {
     } catch (error) {
       logger.error('Error obteniendo el estudiantes sin incidencias');
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
@@ -78,6 +83,11 @@ export class DashboardRepository implements DashboardRepo {
     } catch (error) {
       logger.error('Error obteniendo datos de estudiante por examen');
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 import { AdminRepo } from '../../domain/interfaces/repositories/AdminRepo';
 
-export class GetUniversity {
+export class GetUniversityList {
   constructor(private adminRepo: AdminRepo) {}
 
   async execute() {

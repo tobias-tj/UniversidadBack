@@ -6,10 +6,14 @@ import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class ExamRepository implements ExamRepo {
-  async create(exam: Exam): Promise<boolean> {
+  async create(exam: Exam, connectionDb: string): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para crear el examen del estudiante');
-      await pool.query(
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      await dynamicQuery.executeQuery(
         'INSERT INTO examenes (id, descripcion, fecha, estado) VALUES ($1, $2, $3, $4)',
         [exam.id, exam.courseName, exam.fecha, exam.estado],
       );
@@ -18,17 +22,27 @@ export class ExamRepository implements ExamRepo {
     } catch (error) {
       logger.error('Error creando el examen: ' + error);
       return false;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
-  async findById(id: number): Promise<Exam | null> {
+  async findById(id: number, connectionDb: string): Promise<Exam | null> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener un Examen');
-      const result = await pool.query('SELECT * FROM examenes WHERE id = $1', [
-        id,
-      ]);
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
 
-      if (result.rows.length === 0) {
+      const rows = await dynamicQuery.executeQuery(
+        'SELECT * FROM examenes WHERE id = $1',
+        [id],
+      );
+
+      if (rows.length === 0) {
         logger.info(`No se encontro el examen con el ID: ${id}`);
         return null;
       }
@@ -37,10 +51,15 @@ export class ExamRepository implements ExamRepo {
         'Finaliza con exito el proceso para obtener el examen por el id',
       );
 
-      return result.rows[0];
+      return rows[0];
     } catch (error) {
       logger.info('Error obteniendo el examen');
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
@@ -185,6 +204,11 @@ export class ExamRepository implements ExamRepo {
     } catch (error) {
       logger.error('Error obteniendo total de examenes de diferentes tipos');
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
@@ -193,9 +217,8 @@ export class ExamRepository implements ExamRepo {
     examId: number,
     connectionDb: string,
   ): Promise<any[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
-      let dynamicQuery: DynamicDbQuery | null = null;
-
       dynamicQuery = new DynamicDbQuery(connectionDb);
       await dynamicQuery.initializePool();
 
@@ -230,13 +253,17 @@ export class ExamRepository implements ExamRepo {
           error,
       );
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 
   async getAllListExamInfo(connectionDb: string): Promise<any[]> {
+    let dynamicQuery: DynamicDbQuery | null = null;
     try {
-      let dynamicQuery: DynamicDbQuery | null = null;
-
       dynamicQuery = new DynamicDbQuery(connectionDb);
       await dynamicQuery.initializePool();
 
@@ -255,6 +282,11 @@ export class ExamRepository implements ExamRepo {
     } catch (error) {
       logger.error('Error obteniendo exámenes: ' + error);
       throw error;
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
     }
   }
 }

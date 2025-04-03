@@ -32,6 +32,10 @@ export class FirstProcessController {
 
       const decoded = decodeToken(token);
 
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
       const createExamDTO = new CreateExamDTO(
         decoded?.formId!,
         new Date().toISOString(),
@@ -51,6 +55,7 @@ export class FirstProcessController {
       const existingMatch = await this.findMatchStudentExam.execute(
         createExamDTO.id,
         createStudentDto.id,
+        decoded.connectionDb,
       );
 
       if (existingMatch) {
@@ -62,17 +67,27 @@ export class FirstProcessController {
       }
 
       const [existingStudent, existingExam] = await Promise.all([
-        this.findStudentByIdUseCase.execute(Number(decoded?.userId!)),
-        this.findExamByIdUseCase.execute(decoded?.formId!),
+        this.findStudentByIdUseCase.execute(
+          Number(decoded?.userId!),
+          decoded.connectionDb,
+        ),
+        this.findExamByIdUseCase.execute(
+          decoded?.formId!,
+          decoded.connectionDb,
+        ),
       ]);
 
       // Logica para los diferentes casos:
       if (!existingExam && !existingStudent) {
         // Caso 1: Nuevo Usuario, Nuevo Examen
         await Promise.all([
-          this.createExamUseCase.execute(ExamMapper.toEntity(createExamDTO)),
+          this.createExamUseCase.execute(
+            ExamMapper.toEntity(createExamDTO),
+            decoded.connectionDb,
+          ),
           this.createStudentUsecase.execute(
             StudentMapper.toEntity(createStudentDto),
+            decoded.connectionDb,
           ),
         ]);
       }
@@ -81,6 +96,7 @@ export class FirstProcessController {
         // Caso 2: Usuario Existente, Nuevo Examen
         await this.createExamUseCase.execute(
           ExamMapper.toEntity(createExamDTO),
+          decoded.connectionDb,
         );
       }
 
@@ -88,12 +104,14 @@ export class FirstProcessController {
         // Caso 3: Nuevo Usuario, Examen Existente
         await this.createStudentUsecase.execute(
           StudentMapper.toEntity(createStudentDto),
+          decoded.connectionDb,
         );
       }
 
       const createdId = await this.createExamUserUsecase.execute(
         createExamDTO.id,
         createStudentDto.id,
+        decoded.connectionDb,
       );
 
       if (createdId == null) {

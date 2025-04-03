@@ -4,12 +4,12 @@ import { NextFunction, Request, Response } from 'express';
 import { Login } from '../../usecases/admin_login/login';
 import jwt from 'jsonwebtoken';
 import { SECRET_KEY } from '../../domain/interfaces/middleware/jwtMiddleware';
-import { GetUniversity } from '../../usecases/admin_login/getUniversity';
+import { GetUniversityList } from '../../usecases/admin_login/GetUniversityList';
 
 export class AdminController {
   constructor(
     private auth: Login,
-    private getUniList: GetUniversity,
+    private getUniList: GetUniversityList,
   ) {}
 
   async login(req: Request, res: Response, next: NextFunction) {
