@@ -6,18 +6,22 @@ import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
 export class AnuncioRepository implements AnuncioRepo {
-  async getAnuncios(connectionDb: string): Promise<Anuncios[]> {
+  async getAnuncios(connectionDb: string, onlyUnread: boolean): Promise<Anuncios[]> {
     let dynamicQuery: DynamicDbQuery | null = null;
     try {
       logger.info('Inicia proceso para obtener los anuncios');
-      // Crear conexión dinámica
+      
       dynamicQuery = new DynamicDbQuery(connectionDb);
       await dynamicQuery.initializePool();
-
-      const query = `SELECT * FROM Anuncios`;
+  
+      let query = 'SELECT * FROM Anuncios';
+      if (onlyUnread) {
+        query += ' WHERE visto = false';
+      }
+  
       const rows = await dynamicQuery.executeQuery(query);
       logger.info('Finaliza con éxito el proceso para obtener los anuncios');
-
+  
       return rows || [];
     } catch (error) {
       logger.error('Error obteniendo los anuncios', { error });
