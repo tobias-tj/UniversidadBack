@@ -17,10 +17,14 @@ export class dashboardController {
   async getStudentIncident(req: Request, res: Response, next: NextFunction) {
     try {
       const token = req.headers.authorization?.split(' ')[1];
-      if (!token) return res.status(401).json({ error: 'Token no proporcionado' });
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
   
       const decoded = decodeToken(token);
-      if (!decoded?.connectionDb) return res.status(401).json({ error: 'Token inválido' });
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
   
       const {
         page = '1',
@@ -28,7 +32,6 @@ export class dashboardController {
         search = '',
         sortBy = 'nombre',
         order = 'asc',
-        isCount,
       } = req.query;
   
       const filters = {
@@ -39,12 +42,15 @@ export class dashboardController {
         order: String(order),
       };
   
-      const result = await this.StudentIncident.execute(decoded.connectionDb, isCount === 'true', filters);
+      // Siempre devuelve data + totalCount
+      const result = await this.StudentIncident.execute(decoded.connectionDb, false, filters);
+  
       return res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
+  
   
 
   async getStudentsIncidentByStudentId(

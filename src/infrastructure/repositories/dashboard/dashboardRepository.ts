@@ -10,8 +10,8 @@ import { DynamicDbQuery } from '../../database/DynamicQuery';
 export class DashboardRepository implements DashboardRepo {
   async getStudentIncident(
     connectionDb: string,
-    isCount = false,
-    filters: any = {},
+    _isCount = false, // se mantiene para compatibilidad, pero ya no se usa
+    filters: any = {}
   ): Promise<{ data: newStudent[]; totalCount: number }> {
     let dynamicQuery: DynamicDbQuery | null = null;
   
@@ -36,15 +36,6 @@ export class DashboardRepository implements DashboardRepo {
         whereClause += ` AND (u.nombre ILIKE $${values.length} OR u.email ILIKE $${values.length})`;
       }
   
-      if (isCount) {
-        const countQuery = `SELECT COUNT(*) AS total FROM usuarios u ${whereClause};`;
-        const countResult = await dynamicQuery.executeQuery(countQuery, values);
-        return {
-          data: [],
-          totalCount: parseInt(countResult[0]?.total || '0', 10),
-        };
-      }
-  
       const query = `
         SELECT u.nombre, u.id AS ci, u.email AS correo
         FROM usuarios u
@@ -59,11 +50,15 @@ export class DashboardRepository implements DashboardRepo {
   
       const data = await dynamicQuery.executeQuery(query, values);
   
+      // Para count, usamos misma lógica pero sin limit/offset
       const countQuery = `SELECT COUNT(*) AS total FROM usuarios u ${whereClause};`;
-      const countResult = await dynamicQuery.executeQuery(countQuery, values.slice(0, values.length - 2));
+      const countResult = await dynamicQuery.executeQuery(
+        countQuery,
+        values.slice(0, values.length - 2)
+      );
       const totalCount = parseInt(countResult[0]?.total || '0', 10);
   
-      return { data, totalCount };
+      return { data: data ?? [], totalCount };
     } catch (error) {
       logger.error('Error obteniendo estudiantes con filtro:', error);
       throw error;
@@ -73,6 +68,7 @@ export class DashboardRepository implements DashboardRepo {
       }
     }
   }
+  
   
 
   async getIncidentsByStudentId(
