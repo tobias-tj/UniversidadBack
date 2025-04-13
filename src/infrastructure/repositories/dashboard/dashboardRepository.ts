@@ -10,44 +10,70 @@ import { DynamicDbQuery } from '../../database/DynamicQuery';
 export class DashboardRepository implements DashboardRepo {
   async getStudentIncident(
     connectionDb: string,
-    isCount?: boolean,
-  ): Promise<newStudent[]> {
+    isCount = false,
+    filters: any = {},
+  ): Promise<{ data: newStudent[]; totalCount: number }> {
     let dynamicQuery: DynamicDbQuery | null = null;
-
+  
     try {
-      logger.info('Inicia proceso para obtener un estudiante');
-      // Crear conexión dinámica
       dynamicQuery = new DynamicDbQuery(connectionDb);
       await dynamicQuery.initializePool();
-
-      let sql = '';
-      if (isCount === true) {
-        sql =
-          'SELECT COUNT(DISTINCT id_examenes_usuarios) AS unique_examen_count FROM resumen_reportes';
-      } else {
-        sql = `select 
-                u.nombre, 
-                u.id as ci, 
-                u.email as correo 
-                from usuarios u 
-                where u.rol = 'EST'
-                order by u.id desc;`;
+  
+      const {
+        page = 1,
+        limit = 10,
+        search = '',
+        sortBy = 'u.id',
+        order = 'desc',
+      } = filters;
+  
+      const offset = (page - 1) * limit;
+      const values: any[] = [];
+      let whereClause = `WHERE u.rol = 'EST'`;
+  
+      if (search) {
+        values.push(`%${search}%`);
+        whereClause += ` AND (u.nombre ILIKE $${values.length} OR u.email ILIKE $${values.length})`;
       }
-      const rows = await dynamicQuery.executeQuery(sql);
-      logger.info(
-        'Finaliza con éxito el proceso para obtener estudiantes sin incidencias',
-      );
-      return rows ? rows : [];
+  
+      if (isCount) {
+        const countQuery = `SELECT COUNT(*) AS total FROM usuarios u ${whereClause};`;
+        const countResult = await dynamicQuery.executeQuery(countQuery, values);
+        return {
+          data: [],
+          totalCount: parseInt(countResult[0]?.total || '0', 10),
+        };
+      }
+  
+      const query = `
+        SELECT u.nombre, u.id AS ci, u.email AS correo
+        FROM usuarios u
+        ${whereClause}
+        ORDER BY ${sortBy} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'}
+        LIMIT $${values.length + 1}
+        OFFSET $${values.length + 2};
+      `;
+  
+      values.push(limit);
+      values.push(offset);
+  
+      const data = await dynamicQuery.executeQuery(query, values);
+  
+      const countQuery = `SELECT COUNT(*) AS total FROM usuarios u ${whereClause};`;
+      const countResult = await dynamicQuery.executeQuery(countQuery, values.slice(0, values.length - 2));
+      const totalCount = parseInt(countResult[0]?.total || '0', 10);
+  
+      return { data, totalCount };
     } catch (error) {
-      logger.error('Error obteniendo el estudiantes sin incidencias');
+      logger.error('Error obteniendo estudiantes con filtro:', error);
       throw error;
     } finally {
       if (dynamicQuery) {
         await dynamicQuery.closePool();
-        logger.info('DynamicQuery cerrado correctamente.');
       }
     }
   }
+  
 
   async getIncidentsByStudentId(
     connectionDb: string,

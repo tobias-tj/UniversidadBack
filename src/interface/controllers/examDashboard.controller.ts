@@ -115,20 +115,32 @@ export class ExamDashboardController {
   async getAllListExamInfo(req: Request, res: Response, next: NextFunction) {
     try {
       const token = req.headers.authorization?.split(' ')[1];
-      if (!token) {
-        return res.status(401).json({ error: 'Token no proporcionado' });
-      }
-
-      // Decodificar token
+      if (!token) return res.status(401).json({ error: 'Token no proporcionado' });
+  
       const decoded = decodeToken(token);
-      if (!decoded?.connectionDb) {
-        return res.status(401).json({ error: 'Token inválido' });
-      }
-
-      const exams = await examRepo.getAllListExamInfo(decoded.connectionDb);
-      res.status(200).json(exams);
+      if (!decoded?.connectionDb) return res.status(401).json({ error: 'Token inválido' });
+  
+      const {
+        page = '1',
+        limit = '10',
+        search = '',
+        sortBy = 'fecha',
+        order = 'desc',
+      } = req.query;
+  
+      const filters = {
+        page: parseInt(page as string, 10),
+        limit: parseInt(limit as string, 10),
+        search: String(search),
+        sortBy: String(sortBy),
+        order: String(order),
+      };
+  
+      const { data, totalCount } = await examRepo.getAllListExamInfo(decoded.connectionDb, filters);
+      res.status(200).json({ data, totalCount });
     } catch (error) {
       next(error);
     }
   }
+  
 }

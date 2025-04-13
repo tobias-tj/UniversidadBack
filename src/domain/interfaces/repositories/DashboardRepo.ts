@@ -5,7 +5,9 @@ export interface DashboardRepo {
   getStudentIncident(
     connectionDb: string,
     isCount?: boolean,
-  ): Promise<newStudent[]>;
+    filters?: any
+  ): Promise<{ data: newStudent[]; totalCount: number }>;
+  
   getIncidentsByStudentId(
     connectionDb: string,
     string: String,

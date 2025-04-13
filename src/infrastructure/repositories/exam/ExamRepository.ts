@@ -262,32 +262,47 @@ export class ExamRepository implements ExamRepo {
     }
   }
 
-  async getAllListExamInfo(connectionDb: string): Promise<any[]> {
+  async getAllListExamInfo(connectionDb: string, filters: any = {}): Promise<{ data: any[]; totalCount: number }> {
     let dynamicQuery: DynamicDbQuery | null = null;
     try {
       dynamicQuery = new DynamicDbQuery(connectionDb);
       await dynamicQuery.initializePool();
-
-      const rows = await dynamicQuery.executeQuery(
-        `
-        SELECT 
-          id, 
-          descripcion, 
-          fecha
-        FROM 
-          examenes;
-        `,
-      );
-
-      return rows ?? [];
+  
+      const { page = 1, limit = 10, search = '', sortBy = 'fecha', order = 'desc' } = filters;
+      const offset = (page - 1) * limit;
+      const values: any[] = [];
+  
+      let whereClause = '';
+      if (search) {
+        values.push(`%${search}%`);
+        whereClause = `WHERE descripcion ILIKE $${values.length}`;
+      }
+  
+      const dataQuery = `
+        SELECT id, descripcion, fecha
+        FROM examenes
+        ${whereClause}
+        ORDER BY ${sortBy} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'}
+        LIMIT $${values.length + 1}
+        OFFSET $${values.length + 2};
+      `;
+  
+      const dataValues = [...values, limit, offset];
+      const data = await dynamicQuery.executeQuery(dataQuery, dataValues);
+  
+      const countQuery = `SELECT COUNT(*) AS total FROM examenes ${whereClause};`;
+      const countResult = await dynamicQuery.executeQuery(countQuery, values);
+      const totalCount = parseInt(countResult[0]?.total || '0', 10);
+  
+      return { data, totalCount };
     } catch (error) {
-      logger.error('Error obteniendo exámenes: ' + error);
+      logger.error('Error obteniendo exámenes filtrados con total count: ' + error);
       throw error;
     } finally {
       if (dynamicQuery) {
         await dynamicQuery.closePool();
-        logger.info('DynamicQuery cerrado correctamente.');
       }
     }
   }
+  
 }
