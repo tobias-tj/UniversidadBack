@@ -20,34 +20,38 @@ export class dashboardController {
       if (!token) {
         return res.status(401).json({ error: 'Token no proporcionado' });
       }
-
-      // Decodificar token
+  
       const decoded = decodeToken(token);
       if (!decoded?.connectionDb) {
         return res.status(401).json({ error: 'Token inválido' });
       }
-
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-      const isCount = req.query.isCount as string;
-      let studentList;
-      if (isCount) {
-        studentList = await this.StudentIncident.execute(
-          decoded.connectionDb,
-          true,
-        );
-      } else {
-        studentList = await this.StudentIncident.execute(decoded.connectionDb);
-      }
-      return res.status(200).json({
-        data: studentList,
-      });
+  
+      const {
+        page = '1',
+        limit = '10',
+        search = '',
+        sortBy = 'nombre',
+        order = 'asc',
+      } = req.query;
+  
+      const filters = {
+        page: parseInt(page as string, 10),
+        limit: parseInt(limit as string, 10),
+        search: String(search),
+        sortBy: String(sortBy),
+        order: String(order),
+      };
+  
+      // Siempre devuelve data + totalCount
+      const result = await this.StudentIncident.execute(decoded.connectionDb, false, filters);
+  
+      return res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
+  
+  
 
   async getStudentsIncidentByStudentId(
     req: Request,
