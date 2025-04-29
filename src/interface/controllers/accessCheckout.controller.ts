@@ -62,7 +62,7 @@ export class AccessCheckoutController {
         });
       }
 
-      const { connectionDb, user } = JSON.parse(authData);
+      const { connectionDb, user, proctorType } = JSON.parse(authData);
 
       console.warn(connectionDb);
 
@@ -85,6 +85,7 @@ export class AccessCheckoutController {
           isExist: false,
           moddleUrl: decoded!.moodleUrl,
           token: newToken,
+          proctorType: proctorType,
         });
       }
 
@@ -92,6 +93,7 @@ export class AccessCheckoutController {
         isExist: true,
         moddleUrl: decoded!.moodleUrl,
         token: newToken,
+        proctorType: proctorType,
       });
     } catch (error) {
       logger.info('Entro en tryCatch de AccessCheckout');
