@@ -149,7 +149,7 @@ export class StudentRepository implements StudentRepo {
       await dynamicQuery.initializePool();
 
       const rows = await dynamicQuery.executeQuery(
-        'SELECT EXISTS(SELECT 1 FROM usuarios WHERE id = $1);',
+        'SELECT EXISTS(SELECT 1 FROM usuarios WHERE id = $1 AND is_student_valid = TRUE);',
         [id],
       );
 
@@ -161,9 +161,7 @@ export class StudentRepository implements StudentRepo {
         return false;
       }
 
-      logger.info(
-        'Finaliza con éxito el proceso para obtener el estudiante por el ID',
-      );
+      logger.info('Estudiante encontrado y válido.');
       return true;
     } catch (error) {
       logger.error('Error obteniendo el estudiante por su Id');
