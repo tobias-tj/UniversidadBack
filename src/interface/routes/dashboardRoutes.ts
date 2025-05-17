@@ -4,6 +4,7 @@ import { GetStudentIncident } from '../../usecases/dashboard/getStudentIncident'
 import { GetIncidentsByStudentId } from '../../usecases/dashboard/GetIncidentsByStudentId';
 import { DashboardRepository } from '../../infrastructure/repositories/dashboard/dashboardRepository';
 import { GetAllStudentsIncidentCount } from '../../usecases/dashboard/GetAllStudentsIncidentCount';
+import { GetCredits } from '../../usecases/dashboard/GetCredits';
 
 const router = Router();
 
@@ -13,10 +14,14 @@ const getIncidentsByExamId = new GetIncidentsByStudentId(dashboardRepository);
 const getAllStudentsCount = new GetAllStudentsIncidentCount(
   dashboardRepository,
 );
+
+const getCredits = new GetCredits(dashboardRepository);
+
 const DashboardController = new dashboardController(
   getStudentIncident,
   getIncidentsByExamId,
   getAllStudentsCount,
+  getCredits,
 );
 
 router.get(
@@ -35,6 +40,10 @@ router.get(
   '/getAllStudentsCount',
   (req: Request, res: Response, next: NextFunction) =>
     DashboardController.getAllStudentsCount(req, res, next),
+);
+
+router.get('/getCredits', (req: Request, res: Response, next: NextFunction) =>
+  DashboardController.getCredits(req, res, next),
 );
 
 export { router as dashboardRoutes };

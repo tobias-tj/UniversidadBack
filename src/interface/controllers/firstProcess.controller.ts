@@ -36,6 +36,10 @@ export class FirstProcessController {
         return res.status(401).json({ error: 'Token inválido' });
       }
 
+      if (!decoded?.idUniversidad) {
+        return res.status(401).json({ error: 'Token inválido falta IDs' });
+      }
+
       const createExamDTO = new CreateExamDTO(
         decoded?.formId!,
         new Date().toISOString(),
@@ -112,6 +116,7 @@ export class FirstProcessController {
         createExamDTO.id,
         createStudentDto.id,
         decoded.connectionDb,
+        decoded.idUniversidad,
       );
 
       if (createdId == null) {

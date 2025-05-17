@@ -6,12 +6,14 @@ import { StudentFindAll } from '../../usecases/students/StudentFindAll';
 import { GetStudentIncident } from '../../usecases/dashboard/getStudentIncident';
 import { GetIncidentsByStudentId } from '../../usecases/dashboard/GetIncidentsByStudentId';
 import { GetAllStudentsIncidentCount } from '../../usecases/dashboard/GetAllStudentsIncidentCount';
+import { GetCredits } from '../../usecases/dashboard/GetCredits';
 
 export class dashboardController {
   constructor(
     private StudentIncident: GetStudentIncident,
     private StudentIncidentByExamId: GetIncidentsByStudentId,
     private studentCount: GetAllStudentsIncidentCount,
+    private getCreditsByUniversity: GetCredits,
   ) {}
 
   async getStudentIncident(req: Request, res: Response, next: NextFunction) {
@@ -20,12 +22,12 @@ export class dashboardController {
       if (!token) {
         return res.status(401).json({ error: 'Token no proporcionado' });
       }
-  
+
       const decoded = decodeToken(token);
       if (!decoded?.connectionDb) {
         return res.status(401).json({ error: 'Token inválido' });
       }
-  
+
       const {
         page = '1',
         limit = '10',
@@ -33,7 +35,7 @@ export class dashboardController {
         sortBy = 'nombre',
         order = 'asc',
       } = req.query;
-  
+
       const filters = {
         page: parseInt(page as string, 10),
         limit: parseInt(limit as string, 10),
@@ -41,17 +43,19 @@ export class dashboardController {
         sortBy: String(sortBy),
         order: String(order),
       };
-  
+
       // Siempre devuelve data + totalCount
-      const result = await this.StudentIncident.execute(decoded.connectionDb, false, filters);
-  
+      const result = await this.StudentIncident.execute(
+        decoded.connectionDb,
+        false,
+        filters,
+      );
+
       return res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
-  
-  
 
   async getStudentsIncidentByStudentId(
     req: Request,
@@ -115,6 +119,44 @@ export class dashboardController {
       return res.status(200).json({ data: studentList });
     } catch (error) {
       logger.error('Error en getAllStudentsCount:', error);
+      next(error);
+    }
+  }
+
+  async getCredits(req: Request, res: Response, next: NextFunction) {
+    try {
+      logger.info('Inicia proceso de obtener creditos');
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token no proporcionado' });
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        return res.status(401).json({ error: 'Token inválido' });
+      }
+
+      if (!decoded?.idUniversidad) {
+        return res.status(401).json({ error: 'Token inválido falta IDs' });
+      }
+
+      console.log('Id de universidad---->', decoded.idUniversidad);
+
+      const credits = await this.getCreditsByUniversity.execute(
+        decoded.idUniversidad,
+      );
+
+      if (!credits) {
+        return res.status(404).json({ error: 'No se encontraron creditos' });
+      }
+
+      console.log('Los creditos encontrados---->', credits);
+
+      logger.info('Termina proceso de obtener creditos');
+      return res.status(200).json({ data: credits });
+    } catch (error) {
+      logger.error('Error en getCredits:', error);
       next(error);
     }
   }
