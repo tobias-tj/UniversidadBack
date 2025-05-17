@@ -3,6 +3,7 @@ export interface ManageExamUserRepo {
     idExamen: number,
     idUsuario: number,
     connectionDb: string,
+    idUniversidad: number,
   ): Promise<number | null>;
   createFaceId(idFace: string, idUser: number): Promise<boolean>;
   createStartTime(creationId: number, connectionDb: string): Promise<boolean>;

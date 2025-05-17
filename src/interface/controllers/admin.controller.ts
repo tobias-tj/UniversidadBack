@@ -43,9 +43,13 @@ export class AdminController {
       logger.info('Connexion encontrada-->', connectionDb);
 
       // Crear el JWT firmado
-      const token = jwt.sign({ connectionDb, user }, SECRET_KEY || '', {
-        expiresIn: '4h',
-      });
+      const token = jwt.sign(
+        { connectionDb, user, idUniversidad },
+        SECRET_KEY || '',
+        {
+          expiresIn: '4h',
+        },
+      );
 
       logger.info('Administrador autenticado con éxito');
       res.status(200).json({ token, user });

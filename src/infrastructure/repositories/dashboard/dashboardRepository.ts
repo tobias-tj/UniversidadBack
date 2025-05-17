@@ -6,19 +6,21 @@ import { logger } from '../../logger';
 import { IncidentsCount } from '../../../domain/entities/IncidentsCount';
 import { newStudent } from '../../../domain/entities/newStudent';
 import { DynamicDbQuery } from '../../database/DynamicQuery';
+import { Credits } from '../../../domain/entities/Credits';
+import { pool as centralPool } from '../../database/ConfigDbConnection';
 
 export class DashboardRepository implements DashboardRepo {
   async getStudentIncident(
     connectionDb: string,
     _isCount = false, // se mantiene para compatibilidad, pero ya no se usa
-    filters: any = {}
+    filters: any = {},
   ): Promise<{ data: newStudent[]; totalCount: number }> {
     let dynamicQuery: DynamicDbQuery | null = null;
-  
+
     try {
       dynamicQuery = new DynamicDbQuery(connectionDb);
       await dynamicQuery.initializePool();
-  
+
       const {
         page = 1,
         limit = 10,
@@ -26,16 +28,16 @@ export class DashboardRepository implements DashboardRepo {
         sortBy = 'u.id',
         order = 'desc',
       } = filters;
-  
+
       const offset = (page - 1) * limit;
       const values: any[] = [];
       let whereClause = `WHERE u.rol = 'EST'`;
-  
+
       if (search) {
         values.push(`%${search}%`);
         whereClause += ` AND (u.nombre ILIKE $${values.length} OR u.email ILIKE $${values.length})`;
       }
-  
+
       const query = `
         SELECT u.nombre, u.id AS ci, u.email AS correo
         FROM usuarios u
@@ -44,20 +46,20 @@ export class DashboardRepository implements DashboardRepo {
         LIMIT $${values.length + 1}
         OFFSET $${values.length + 2};
       `;
-  
+
       values.push(limit);
       values.push(offset);
-  
+
       const data = await dynamicQuery.executeQuery(query, values);
-  
+
       // Para count, usamos misma lógica pero sin limit/offset
       const countQuery = `SELECT COUNT(*) AS total FROM usuarios u ${whereClause};`;
       const countResult = await dynamicQuery.executeQuery(
         countQuery,
-        values.slice(0, values.length - 2)
+        values.slice(0, values.length - 2),
       );
       const totalCount = parseInt(countResult[0]?.total || '0', 10);
-  
+
       return { data: data ?? [], totalCount };
     } catch (error) {
       logger.error('Error obteniendo estudiantes con filtro:', error);
@@ -68,8 +70,6 @@ export class DashboardRepository implements DashboardRepo {
       }
     }
   }
-  
-  
 
   async getIncidentsByStudentId(
     connectionDb: string,
@@ -202,6 +202,33 @@ LEFT JOIN
       if (dynamicQuery) {
         await dynamicQuery.closePool();
       }
+    }
+  }
+
+  async getCreditsByUniversity(universityId: number): Promise<Credits> {
+    try {
+      logger.info('Inicia proceso para obtener los créditos de la universidad');
+
+      const query = `
+        SELECT 
+          COALESCE(SUM(cantidad), 0) AS creditos_disponibles,
+          ABS(COALESCE(SUM(CASE WHEN cantidad < 0 THEN cantidad ELSE 0 END), 0)) AS creditos_utilizados
+        FROM movimientos_creditos
+        WHERE iduniversidad = $1;
+      `;
+
+      const result = await centralPool.query(query, [universityId]);
+      const row = result.rows[0];
+
+      const response: Credits = {
+        creditosDisponibles: row?.creditos_disponibles || 0,
+        creditosUtilizados: row?.creditos_utilizados || 0,
+      };
+
+      return response;
+    } catch (error) {
+      logger.error('Error obteniendo los créditos de la universidad', error);
+      throw error;
     }
   }
 }
