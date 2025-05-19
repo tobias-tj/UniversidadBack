@@ -3,9 +3,13 @@ import { GetAnuncios } from '../../usecases/anuncios/GetAnuncios';
 import { logger } from '../../infrastructure/logger';
 import { NextFunction, Request, Response } from 'express';
 import { decodeToken } from '../../domain/interfaces/middleware/jwtMiddleware';
+import { UpdateAnuncioById } from '../../usecases/anuncios/UpdateAnuncioById';
 
 export class AnunciosController {
-  constructor(private getTotalAnuncios: GetAnuncios) {}
+  constructor(
+    private getTotalAnuncios: GetAnuncios,
+    private updateAnuncioStatus: UpdateAnuncioById,
+  ) {}
 
   async getAllAnuncios(req: Request, res: Response, next: NextFunction) {
     try {
@@ -52,6 +56,48 @@ export class AnunciosController {
       });
     } catch (error) {
       logger.error('Error en el controlador de anuncios', { error });
+      next(error);
+    }
+  }
+
+  async updateAnunciosById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      logger.info('Inicia proceso para cambiar status de visto del anuncio');
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        res.status(401).json({ error: 'Token no proporcionado' });
+        return;
+      }
+
+      // Decodificar token
+      const decoded = decodeToken(token);
+      if (!decoded?.connectionDb) {
+        res.status(401).json({ error: 'Token inválido' });
+        return;
+      }
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(400).json({ errors: errors.array() });
+        return;
+      }
+      const anuncioStatus = await this.updateAnuncioStatus.execute(
+        req.body.id,
+        decoded.connectionDb,
+      );
+      logger.info('Anuncio actualizado con exito');
+      if (anuncioStatus) {
+        res.status(200).json({ data: 'Anuncio actualizado con Exito' });
+      } else {
+        res
+          .status(200)
+          .json({ data: 'No se ha encontrado el anuncio solicitado' });
+      }
+    } catch (error) {
+      logger.error('Error actualizando el anuncio', { error });
       next(error);
     }
   }

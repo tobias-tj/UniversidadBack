@@ -36,4 +36,37 @@ export class AnuncioRepository implements AnuncioRepo {
       }
     }
   }
+
+  async updateAnuncioById(id: number, connectionDb: string): Promise<boolean> {
+    let dynamicQuery: DynamicDbQuery | null = null;
+    try {
+      logger.info(`Inicia proceso para actualizar el anuncio con ID: ${id}`);
+      dynamicQuery = new DynamicDbQuery(connectionDb);
+      await dynamicQuery.initializePool();
+
+      const query = `
+            UPDATE anuncios
+            SET visto = true
+            WHERE id = $1`;
+      const values = [id];
+
+      const rows = await dynamicQuery.executeQuery(query, values);
+
+      if (rows.length === 0) {
+        logger.warn(`No se encontró ningún anuncio con ID: ${id}`);
+        return false;
+      }
+
+      logger.info(`Anuncio con ID: ${id} actualizado con éxito`);
+      return true;
+    } catch (error) {
+      logger.error('Error actualizando el anuncio', { error });
+      throw new Error('Error actualizando el anuncio en la base de datos');
+    } finally {
+      if (dynamicQuery) {
+        await dynamicQuery.closePool();
+        logger.info('DynamicQuery cerrado correctamente.');
+      }
+    }
+  }
 }
