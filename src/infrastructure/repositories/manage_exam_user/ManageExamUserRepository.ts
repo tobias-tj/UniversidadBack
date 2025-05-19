@@ -1,5 +1,6 @@
 import { ManageExamUserRepo } from '../../../domain/interfaces/repositories/ManageExamUserRepo';
 import { pool } from '../../database/dbConnection';
+import { pool as centralPool } from '../../database/ConfigDbConnection';
 import { DynamicDbQuery } from '../../database/DynamicQuery';
 import { logger } from '../../logger';
 
@@ -8,6 +9,7 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
     idExamen: number,
     idUsuario: number,
     connectionDb: string,
+    idUniversidad: number,
   ): Promise<number | null> {
     let dynamicQuery: DynamicDbQuery | null = null;
     try {
@@ -23,6 +25,18 @@ export class ManageExamUserRepository implements ManageExamUserRepo {
       logger.info('Datos guardados correctamente para examenesUsuarios');
 
       const insertedId = rows[0]?.id;
+      if (insertedId) {
+        logger.info(
+          `Llamando a restar_credito para la universidad ${idUniversidad}`,
+        );
+
+        await centralPool.query('SELECT restar_credito($1, $2)', [
+          idUniversidad,
+          1,
+        ]);
+
+        logger.info('restar_credito ejecutada correctamente');
+      }
       return insertedId || null;
     } catch (error) {
       logger.error('Error guardando datos en examenesUsuarios: ' + error);

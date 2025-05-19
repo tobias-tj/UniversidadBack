@@ -6,44 +6,67 @@ import { logger } from '../../logger';
 import { IncidentsCount } from '../../../domain/entities/IncidentsCount';
 import { newStudent } from '../../../domain/entities/newStudent';
 import { DynamicDbQuery } from '../../database/DynamicQuery';
+import { Credits } from '../../../domain/entities/Credits';
+import { pool as centralPool } from '../../database/ConfigDbConnection';
 
 export class DashboardRepository implements DashboardRepo {
   async getStudentIncident(
     connectionDb: string,
-    isCount?: boolean,
-  ): Promise<newStudent[]> {
+    _isCount = false, // se mantiene para compatibilidad, pero ya no se usa
+    filters: any = {},
+  ): Promise<{ data: newStudent[]; totalCount: number }> {
     let dynamicQuery: DynamicDbQuery | null = null;
+
     try {
-      logger.info('Inicia proceso para obtener un estudiante');
-      // Crear conexión dinámica
       dynamicQuery = new DynamicDbQuery(connectionDb);
       await dynamicQuery.initializePool();
 
-      let sql = '';
-      if (isCount === true) {
-        sql =
-          'SELECT COUNT(DISTINCT id_examenes_usuarios) AS unique_examen_count FROM resumen_reportes';
-      } else {
-        sql = `select 
-                u.nombre, 
-                u.id as ci, 
-                u.email as correo 
-                from usuarios u 
-                where u.rol = 'EST'
-                order by u.id desc;`;
+      const {
+        page = 1,
+        limit = 10,
+        search = '',
+        sortBy = 'u.id',
+        order = 'desc',
+      } = filters;
+
+      const offset = (page - 1) * limit;
+      const values: any[] = [];
+      let whereClause = `WHERE u.rol = 'EST'`;
+
+      if (search) {
+        values.push(`%${search}%`);
+        whereClause += ` AND (u.nombre ILIKE $${values.length} OR u.email ILIKE $${values.length})`;
       }
-      const rows = await dynamicQuery.executeQuery(sql);
-      logger.info(
-        'Finaliza con éxito el proceso para obtener estudiantes sin incidencias',
+
+      const query = `
+        SELECT u.nombre, u.id AS ci, u.email AS correo
+        FROM usuarios u
+        ${whereClause}
+        ORDER BY ${sortBy} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'}
+        LIMIT $${values.length + 1}
+        OFFSET $${values.length + 2};
+      `;
+
+      values.push(limit);
+      values.push(offset);
+
+      const data = await dynamicQuery.executeQuery(query, values);
+
+      // Para count, usamos misma lógica pero sin limit/offset
+      const countQuery = `SELECT COUNT(*) AS total FROM usuarios u ${whereClause};`;
+      const countResult = await dynamicQuery.executeQuery(
+        countQuery,
+        values.slice(0, values.length - 2),
       );
-      return rows ? rows : [];
+      const totalCount = parseInt(countResult[0]?.total || '0', 10);
+
+      return { data: data ?? [], totalCount };
     } catch (error) {
-      logger.error('Error obteniendo el estudiantes sin incidencias');
+      logger.error('Error obteniendo estudiantes con filtro:', error);
       throw error;
     } finally {
       if (dynamicQuery) {
         await dynamicQuery.closePool();
-        logger.info('DynamicQuery cerrado correctamente.');
       }
     }
   }
@@ -178,6 +201,32 @@ LEFT JOIN
       if (dynamicQuery) {
         await dynamicQuery.closePool();
       }
+    }
+  }
+  async getCreditsByUniversity(universityId: number): Promise<Credits> {
+    try {
+      logger.info('Inicia proceso para obtener los créditos de la universidad');
+
+      const query = `
+        SELECT 
+          COALESCE(SUM(cantidad), 0) AS creditos_disponibles,
+          ABS(COALESCE(SUM(CASE WHEN cantidad < 0 THEN cantidad ELSE 0 END), 0)) AS creditos_utilizados
+        FROM movimientos_creditos
+        WHERE iduniversidad = $1;
+      `;
+
+      const result = await centralPool.query(query, [universityId]);
+      const row = result.rows[0];
+
+      const response: Credits = {
+        creditosDisponibles: row?.creditos_disponibles || 0,
+        creditosUtilizados: row?.creditos_utilizados || 0,
+      };
+
+      return response;
+    } catch (error) {
+      logger.error('Error obteniendo los créditos de la universidad', error);
+      throw error;
     }
   }
 }

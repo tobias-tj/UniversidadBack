@@ -19,7 +19,7 @@ export class AdminRepository implements AdminRepo {
       // Paso 1: Obtener la URL de conexión de la tabla universidades
       logger.info(`ID Universidad: ${idUniversidad}`);
       const queryUniversidad =
-        'SELECT connectiondb FROM universidades WHERE iduniversidad = $1';
+        'SELECT connectiondb, proctor_type FROM universidades WHERE iduniversidad = $1';
       const resultUniversidad = await pool.query(queryUniversidad, [
         idUniversidad,
       ]);
@@ -30,6 +30,8 @@ export class AdminRepository implements AdminRepo {
       }
 
       const connectionDbUrl = resultUniversidad.rows[0].connectiondb;
+      const proctorType = resultUniversidad.rows[0].proctor_type;
+      logger.info('Se encontro proctorType-->', proctorType);
 
       // Paso 2: Crear una instancia de DynamicDbQuery
       dynamicQuery = new DynamicDbQuery(connectionDbUrl);
@@ -60,10 +62,11 @@ export class AdminRepository implements AdminRepo {
         return undefined;
       }
 
-      // Paso 5: Devolver los datos del usuario y la conexión
+      // Paso 4: Devolver datos seguros
       const data = {
         connectionDb: connectionDbUrl,
         user: usuario.nombre,
+        proctorType: proctorType,
       };
       return JSON.stringify(data);
     } catch (error: any) {

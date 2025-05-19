@@ -17,6 +17,7 @@ interface DecodedToken {
   emailAdmin: string;
   passAdmin: string;
   connectionDb: string;
+  universityName: string;
 }
 
 dotenv.config();
@@ -45,6 +46,7 @@ export const decodeToken = (token: string): DecodedToken | null => {
       emailAdmin: decoded.emailAdmin,
       passAdmin: decoded.passAdmin,
       connectionDb: decoded.connectionDb,
+      universityName: decoded.universityName,
     };
   } catch (error) {
     console.error('Error al decodificar el token:', error);

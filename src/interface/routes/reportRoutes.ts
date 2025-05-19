@@ -5,6 +5,8 @@ import { GetAllReportByIdRelation } from '../../usecases/report/GetAllReportById
 import { ResumeReportController } from '../controllers/resumeReport.Controller';
 import { ReportRepository } from '../../infrastructure/repositories/report/ReportRepository';
 import { GetReportCount } from '../../usecases/report/GetReportCount';
+import { GetReportDays } from '../../usecases/report/GetReportDays';
+import { GetReportMonths } from '../../usecases/report/GetMonths';
 
 const studentRepository = new StudentRepository();
 const reportsRepository = new ReportRepository();
@@ -13,10 +15,15 @@ const getReportCount = new GetReportCount(reportsRepository);
 const getAllReportByIdRelation = new GetAllReportByIdRelation(
   reportsRepository,
 );
+const getReportDays = new GetReportDays(reportsRepository);
+const getReportMonths = new GetReportMonths(reportsRepository);
+
 const resumeReportController = new ResumeReportController(
   getStudentResumeReport,
   getAllReportByIdRelation,
   getReportCount,
+  getReportDays,
+  getReportMonths,
 );
 const router = Router();
 router.get(
@@ -35,6 +42,18 @@ router.get(
   '/generateReportByIdRelation',
   (req: Request, res: Response, next: NextFunction) =>
     resumeReportController.generateReportByIdRelation(req, res, next),
+);
+
+router.get(
+  '/getReportDays',
+  (req: Request, res: Response, next: NextFunction) =>
+    resumeReportController.getReportDays(req, res, next),
+);
+
+router.get(
+  '/getReportMonths',
+  (req: Request, res: Response, next: NextFunction) =>
+    resumeReportController.getReportMonths(req, res, next),
 );
 
 export { router as reportRoutes };
